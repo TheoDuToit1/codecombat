@@ -21,594 +21,423 @@ import {
   Music,
   Image,
   Save,
-  User
+  User,
+  Layers,
+  Upload
 } from 'lucide-react';
 import { CrewMember } from '../data/story';
 import { CharacterAnimator } from './CharacterAnimator';
 
 interface DashboardProps {
-  onNavigate: (section: string) => void;
-  currentProgress: number;
-  selectedCrewMember: CrewMember | null;
+  onNavigate?: (view: 
+    | 'dashboard' 
+    | 'gauntlet-selection' 
+    | 'gauntlet-arcade' 
+    | 'babylon-viewport' 
+    | 'babylon-topdown' 
+    | 'asset-workshop' 
+    | 'character-selector'
+    | 'character-carousel'
+    | 'audio-manager'
+    | 'asset-manager'
+    | 'sprite-upload'
+    | 'sprite-creator'
+    | 'code-editor'
+    | 'game-grid'
+    | 'xcode-academy'
+    | 'project-manager'
+  ) => void;
+  currentProgress?: number;
+  crewMembers?: CrewMember[];
+  selectedCrewMember?: CrewMember | null;
+  onStartGame?: () => void;
+  onStartGauntlet?: () => void;
+  onShowCrewIntro?: () => void;
+  onShowLessonPlan?: () => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({
+const Dashboard: React.FC<DashboardProps> = ({
   onNavigate,
-  currentProgress,
-  selectedCrewMember
+  currentProgress = 0,
+  crewMembers = [],
+  selectedCrewMember,
+  onStartGame,
+  onStartGauntlet,
+  onShowCrewIntro,
+  onShowLessonPlan
 }) => {
   const [activeSection, setActiveSection] = useState('overview');
 
   const progressPercentage = (currentProgress / 160) * 100;
-  const gauntletUnlocked = currentProgress >= 40;
 
-  const getCrewMemberIcon = (member: CrewMember | null) => {
-    if (!member) return <User className="w-6 h-6" />;
+  const handleSectionChange = (section: string) => {
+    setActiveSection(section);
     
-    switch (member.gauntletClass) {
-      case 'warrior': return <Sword className="w-6 h-6" />;
-      case 'valkyrie': return <Crown className="w-6 h-6" />;
-      case 'wizard': return <Wand2 className="w-6 h-6" />;
-      case 'elf': return <Target className="w-6 h-6" />;
-      default: return <User className="w-6 h-6" />;
-    }
-  };
-
-  const getCrewMemberColor = (member: CrewMember | null) => {
-    if (!member) return 'from-gray-500 to-gray-700';
-    
-    switch (member.gauntletClass) {
-      case 'warrior': return 'from-red-500 to-red-700';
-      case 'valkyrie': return 'from-purple-500 to-purple-700';
-      case 'wizard': return 'from-blue-500 to-blue-700';
-      case 'elf': return 'from-green-500 to-green-700';
-      default: return 'from-gray-500 to-gray-700';
+    // If this is a mobile view, scroll to the section
+    if (window.innerWidth < 768) {
+      const element = document.getElementById(`section-${section}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-teal-600 text-white">
-        <div className="container mx-auto px-6 py-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold mb-2">🎮 RockPaperScissorCode</h1>
-              <p className="text-xl text-purple-100">Complete Development Dashboard</p>
-            </div>
-            
-            {/* Current Mentor Display */}
-            {selectedCrewMember && (
-              <div className={`bg-gradient-to-r ${getCrewMemberColor(selectedCrewMember)} bg-opacity-20 border border-white border-opacity-30 rounded-xl p-4`}>
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-white bg-opacity-20 rounded-lg">
-                    {getCrewMemberIcon(selectedCrewMember)}
-                  </div>
-                  <div>
-                    <div className="font-bold text-lg">{selectedCrewMember.name}</div>
-                    <div className="text-sm opacity-90">{selectedCrewMember.codingSkill} Master</div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {/* Progress Overview */}
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white bg-opacity-10 rounded-xl p-4">
-              <div className="flex items-center space-x-3 mb-3">
-                <BookOpen className="w-6 h-6 text-blue-300" />
-                <span className="font-semibold">Learning Progress</span>
-              </div>
-              <div className="text-2xl font-bold mb-2">{currentProgress}/160 Lessons</div>
-              <div className="w-full bg-white bg-opacity-20 rounded-full h-2">
-                <div 
-                  className="bg-gradient-to-r from-yellow-400 to-orange-500 h-2 rounded-full transition-all duration-500"
-                  style={{ width: `${progressPercentage}%` }}
-                />
-              </div>
-              <div className="text-sm opacity-75 mt-1">{Math.round(progressPercentage)}% Complete</div>
-            </div>
-            
-            <div className="bg-white bg-opacity-10 rounded-xl p-4">
-              <div className="flex items-center space-x-3 mb-3">
-                <Trophy className="w-6 h-6 text-yellow-300" />
-                <span className="font-semibold">Achievements</span>
-              </div>
-              <div className="text-2xl font-bold mb-2">
-                {currentProgress >= 40 ? '🏰' : currentProgress >= 20 ? '⚔️' : currentProgress >= 10 ? '🧙‍♂️' : '👶'} 
-                {currentProgress >= 40 ? ' Hero' : currentProgress >= 20 ? ' Warrior' : currentProgress >= 10 ? ' Apprentice' : ' Beginner'}
-              </div>
-              <div className="text-sm opacity-75">
-                {gauntletUnlocked ? 'Gauntlet Unlocked!' : `${40 - currentProgress} lessons to Gauntlet`}
-              </div>
-            </div>
-            
-            <div className="bg-white bg-opacity-10 rounded-xl p-4">
-              <div className="flex items-center space-x-3 mb-3">
-                <Users className="w-6 h-6 text-green-300" />
-                <span className="font-semibold">Active Mentors</span>
-              </div>
-              <div className="text-2xl font-bold mb-2">
-                {currentProgress >= 25 ? '4' : currentProgress >= 15 ? '3' : currentProgress >= 10 ? '2' : '1'}/4 Unlocked
-              </div>
-              <div className="text-sm opacity-75">
-                {selectedCrewMember ? `Training with ${selectedCrewMember.name}` : 'No mentor selected'}
-              </div>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gray-900 text-white">
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold mb-2">X-Code Game Development</h1>
+          <p className="text-xl text-gray-400">Build, learn, and play with code</p>
         </div>
-      </div>
 
-      {/* Navigation Tabs */}
-      <div className="bg-white bg-opacity-10 border-b border-white border-opacity-20">
-        <div className="container mx-auto px-6">
-          <div className="flex space-x-8">
-            {[
-              { id: 'overview', label: 'Overview', icon: Target },
-              { id: 'courses', label: 'Courses', icon: BookOpen },
-              { id: 'tools', label: 'Tools', icon: Settings },
-              { id: 'projects', label: 'Projects', icon: FolderOpen }
-            ].map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                onClick={() => setActiveSection(id as any)}
-                className={`
-                  flex items-center space-x-2 px-4 py-4 border-b-2 transition-all duration-200
-                  ${activeSection === id 
-                    ? 'border-blue-400 text-blue-300' 
-                    : 'border-transparent text-gray-300 hover:text-white hover:border-gray-400'
-                  }
-                `}
-              >
-                <Icon className="w-5 h-5" />
-                <span className="font-medium">{label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="container mx-auto px-6 py-8">
-        {activeSection === 'overview' && (
-          <div className="space-y-8">
-            {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <button
-                onClick={() => onNavigate('xcode-academy')}
-                className="group bg-gradient-to-br from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
-              >
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="p-3 bg-white bg-opacity-20 rounded-xl">
-                    <Play className="w-8 h-8" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-xl font-bold">Continue Learning</h3>
-                    <p className="text-blue-100">X-Code Crew Academy</p>
-                  </div>
-                </div>
-                <div className="text-left">
-                  <div className="text-sm opacity-75 mb-2">Lesson {currentProgress}/160</div>
-                  <div className="w-full bg-white bg-opacity-20 rounded-full h-2">
-                    <div 
-                      className="bg-white h-2 rounded-full transition-all duration-500"
-                      style={{ width: `${progressPercentage}%` }}
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center justify-between mt-4">
-                  <span className="text-sm">Resume your journey</span>
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </button>
-
-              {gauntletUnlocked && (
-                <button className="group bg-gradient-to-br from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
-                  <div className="flex items-center space-x-4 mb-4">
-                    <div className="p-3 bg-white bg-opacity-20 rounded-xl">
-                      <Gamepad2 className="w-8 h-8" />
-                    </div>
-                    <div className="text-left">
-                      <h3 className="text-xl font-bold">The Great Gauntlet</h3>
-                      <p className="text-yellow-100">100 Epic Levels</p>
-                    </div>
-                  </div>
-                  <div className="text-left">
-                    <div className="text-sm opacity-75 mb-2">Adventure Mode Unlocked!</div>
-                    <div className="flex items-center space-x-2">
-                      <Trophy className="w-4 h-4" />
-                      <span className="text-sm">Epic coding challenges await</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between mt-4">
-                    <span className="text-sm">Enter the Gauntlet</span>
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </button>
-              )}
-
-              <button
-                onClick={() => onNavigate('character-animator')}
-                className="group bg-gradient-to-br from-green-600 to-teal-700 hover:from-green-700 hover:to-teal-800 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
-              >
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="p-3 bg-white bg-opacity-20 rounded-xl">
-                    <User className="w-8 h-8" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-xl font-bold">Character Animator</h3>
-                    <p className="text-green-100">Design & Animate Heroes</p>
-                  </div>
-                </div>
-                <div className="text-left text-sm opacity-75 mb-4">
-                  Create characters and design their animations with our visual editor
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Create & Animate</span>
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </button>
-            </div>
-
-            {/* Recent Activity */}
-            <div className="bg-white bg-opacity-10 rounded-2xl p-6">
-              <h2 className="text-2xl font-bold text-white mb-6">Recent Activity</h2>
-              <div className="space-y-4">
-                <div className="flex items-center space-x-4 p-4 bg-white bg-opacity-5 rounded-xl">
-                  <div className="p-2 bg-green-500 bg-opacity-20 rounded-lg">
-                    <Star className="w-5 h-5 text-green-400" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium text-white">Completed Lesson {currentProgress}</div>
-                    <div className="text-sm text-gray-300">Earned 100 XP • 2 hours ago</div>
-                  </div>
-                  <div className="text-green-400 font-bold">+100 XP</div>
-                </div>
-                
-                {selectedCrewMember && (
-                  <div className="flex items-center space-x-4 p-4 bg-white bg-opacity-5 rounded-xl">
-                    <div className={`p-2 bg-gradient-to-r ${getCrewMemberColor(selectedCrewMember)} bg-opacity-20 rounded-lg`}>
-                      {getCrewMemberIcon(selectedCrewMember)}
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium text-white">Training with {selectedCrewMember.name}</div>
-                      <div className="text-sm text-gray-300">Learning {selectedCrewMember.codingSkill} • Active</div>
-                    </div>
-                    <div className="text-blue-400 font-bold">Active</div>
-                  </div>
-                )}
-                
-                <div className="flex items-center space-x-4 p-4 bg-white bg-opacity-5 rounded-xl">
-                  <div className="p-2 bg-purple-500 bg-opacity-20 rounded-lg">
-                    <Trophy className="w-5 h-5 text-purple-400" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium text-white">Achievement Unlocked</div>
-                    <div className="text-sm text-gray-300">First Steps • 1 day ago</div>
-                  </div>
-                  <div className="text-purple-400 font-bold">🏆</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeSection === 'courses' && (
-          <div className="space-y-8">
-            <div className="text-center">
-              <h2 className="text-3xl font-bold text-white mb-4">Learning Paths</h2>
-              <p className="text-gray-300 text-lg">Choose your coding adventure</p>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* X-Code Academy */}
-              <div className="bg-gradient-to-br from-blue-600 to-purple-700 rounded-2xl p-8 text-white">
-                <div className="flex items-center space-x-4 mb-6">
-                  <div className="p-3 bg-white bg-opacity-20 rounded-xl">
-                    <BookOpen className="w-8 h-8" />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-bold">X-Code Crew Academy</h3>
-                    <p className="text-blue-100">160 Structured Lessons</p>
-                  </div>
-                </div>
-                
-                <div className="space-y-4 mb-6">
-                  <div className="flex justify-between">
-                    <span>Progress</span>
-                    <span className="font-bold">{currentProgress}/160</span>
-                  </div>
-                  <div className="w-full bg-white bg-opacity-20 rounded-full h-3">
-                    <div 
-                      className="bg-white h-3 rounded-full transition-all duration-500"
-                      style={{ width: `${progressPercentage}%` }}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4 mt-6">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">4</div>
-                      <div className="text-sm opacity-75">Mentors</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">40</div>
-                      <div className="text-sm opacity-75">Concepts</div>
-                    </div>
-                  </div>
-                </div>
-                
+        <div className="flex flex-col lg:flex-row gap-6">
+          <div className="lg:w-1/4 mb-6 lg:mb-0">
+            <div className="bg-gray-800 rounded-2xl p-6 sticky top-4">
+              <h2 className="text-2xl font-bold mb-6">Navigation</h2>
+              <nav className="space-y-2">
                 <button
-                  onClick={() => onNavigate('xcode-academy')}
-                  className="w-full bg-white bg-opacity-20 hover:bg-opacity-30 text-white py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2"
-                >
-                  <span>Continue Learning</span>
-                  <ArrowRight className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Gauntlet */}
-              <div className={`bg-gradient-to-br ${gauntletUnlocked ? 'from-yellow-500 to-orange-600' : 'from-gray-600 to-gray-700'} rounded-2xl p-8 text-white ${!gauntletUnlocked ? 'opacity-60' : ''}`}>
-                <div className="flex items-center space-x-4 mb-6">
-                  <div className="p-3 bg-white bg-opacity-20 rounded-xl">
-                    <Gamepad2 className="w-8 h-8" />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-bold">The Great Gauntlet</h3>
-                    <p className={gauntletUnlocked ? "text-yellow-100" : "text-gray-300"}>100 Epic Adventures</p>
-                  </div>
-                </div>
-                
-                <div className="space-y-4 mb-6">
-                  <div className="flex justify-between">
-                    <span>Status</span>
-                    <span className="font-bold">{gauntletUnlocked ? 'Unlocked!' : 'Locked'}</span>
-                  </div>
-                  
-                  {!gauntletUnlocked && (
-                    <div className="text-sm opacity-75">
-                      Complete {40 - currentProgress} more lessons to unlock
-                    </div>
-                  )}
-                  
-                  <div className="grid grid-cols-2 gap-4 mt-6">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">100</div>
-                      <div className="text-sm opacity-75">Levels</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">4</div>
-                      <div className="text-sm opacity-75">Floors</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <button
-                  disabled={!gauntletUnlocked}
-                  className={`w-full py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
-                    gauntletUnlocked 
-                      ? 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white' 
-                      : 'bg-gray-500 bg-opacity-50 text-gray-300 cursor-not-allowed'
+                  onClick={() => handleSectionChange('overview')}
+                  className={`w-full text-left px-4 py-3 rounded-xl transition-colors ${
+                    activeSection === 'overview' ? 'bg-blue-600 text-white' : 'hover:bg-gray-700'
                   }`}
                 >
-                  <span>{gauntletUnlocked ? 'Enter Gauntlet' : 'Complete CS1 to Unlock'}</span>
-                  {gauntletUnlocked && <ArrowRight className="w-5 h-5" />}
+                  Overview
+                </button>
+                <button
+                  onClick={() => handleSectionChange('learning')}
+                  className={`w-full text-left px-4 py-3 rounded-xl transition-colors ${
+                    activeSection === 'learning' ? 'bg-blue-600 text-white' : 'hover:bg-gray-700'
+                  }`}
+                >
+                  Learning Path
+                </button>
+                <button
+                  onClick={() => handleSectionChange('tools')}
+                  className={`w-full text-left px-4 py-3 rounded-xl transition-colors ${
+                    activeSection === 'tools' ? 'bg-blue-600 text-white' : 'hover:bg-gray-700'
+                  }`}
+                >
+                  Development Tools
+                </button>
+              </nav>
+
+              <div className="mt-8 pt-6 border-t border-gray-700">
+                <h3 className="text-lg font-medium mb-2">Your Progress</h3>
+                <div className="w-full bg-gray-700 rounded-full h-4 mb-2">
+                  <div
+                    className="bg-gradient-to-r from-blue-500 to-purple-600 h-4 rounded-full transition-all duration-500 ease-out"
+                    style={{ width: `${progressPercentage}%` }}
+                  ></div>
+                </div>
+                <p className="text-sm text-gray-400">
+                  {currentProgress} / 160 points ({Math.round(progressPercentage)}%)
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:w-3/4">
+            {/* Overview Section */}
+            <div
+              id="section-overview"
+              className={`mb-12 transition-opacity duration-300 ${
+                activeSection === 'overview' ? 'opacity-100' : 'opacity-0 lg:hidden h-0 overflow-hidden'
+              }`}
+            >
+              <h2 className="text-3xl font-bold mb-6">Welcome to X-Code</h2>
+              <p className="text-gray-300 mb-8">
+                Your all-in-one game development environment. Create characters, design levels, write code, and play your game all in one place.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <button
+                  onClick={() => onNavigate && onNavigate('xcode-academy')}
+                  className="group bg-gradient-to-br from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="p-3 bg-white bg-opacity-20 rounded-xl">
+                      <BookOpen className="w-6 h-6" />
+                    </div>
+                    <span className="text-xs font-medium bg-white bg-opacity-20 px-2 py-1 rounded-full">Recommended</span>
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">X-Code Academy</h3>
+                  <p className="text-gray-300 mb-4">Start your journey with guided tutorials and challenges</p>
+                  <div className="flex items-center text-sm text-blue-300 group-hover:text-blue-200">
+                    <span>Get started</span>
+                    <svg className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => onNavigate && onNavigate('gauntlet-selection')}
+                  className="group bg-gradient-to-br from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="p-3 bg-white bg-opacity-20 rounded-xl">
+                      <Gamepad2 className="w-6 h-6" />
+                    </div>
+                    <span className="text-xs font-medium bg-white bg-opacity-20 px-2 py-1 rounded-full">Epic Challenge</span>
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Gauntlet Mode</h3>
+                  <p className="text-gray-300 mb-4">Challenge yourself with 100 epic dungeon levels</p>
+                  <div className="flex items-center text-sm text-yellow-300 group-hover:text-yellow-200">
+                    <span>Enter the gauntlet</span>
+                    <svg className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </button>
+
+                <div className="bg-gray-800 p-6 rounded-2xl">
+                  <h3 className="text-xl font-bold mb-4">Your Crew</h3>
+                  <div className="space-y-4">
+                    {crewMembers.length > 0 ? (
+                      crewMembers.map((member, index) => (
+                        <div key={index} className="flex items-center">
+                          <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center">
+                            <User className="w-6 h-6 text-gray-400" />
+                          </div>
+                          <div className="ml-3">
+                            <p className="font-medium">{member.name}</p>
+                            <p className="text-xs text-gray-400">{member.codingSkill} Expert</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-400">Complete tutorials to recruit crew members</p>
+                    )}
+                  </div>
+                  
+                  <button
+                    onClick={() => onNavigate && onNavigate('xcode-academy')}
+                    className="w-full bg-white bg-opacity-20 hover:bg-opacity-30 text-white py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2"
+                  >
+                    <Play className="w-4 h-4" />
+                    <span>Start Adventure</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Learning Path Section */}
+            <div
+              id="section-learning"
+              className={`mb-12 transition-opacity duration-300 ${
+                activeSection === 'learning' ? 'opacity-100' : 'opacity-0 lg:hidden h-0 overflow-hidden'
+              }`}
+            >
+              <h2 className="text-3xl font-bold mb-6">Learning Path</h2>
+              <p className="text-gray-300 mb-8">
+                Follow our structured learning path to master game development concepts.
+              </p>
+
+              <div className="space-y-6">
+                {/* X-Code Academy Featured Course */}
+                <div className="bg-gradient-to-r from-blue-900 to-indigo-900 p-6 rounded-2xl shadow-lg">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-2xl font-bold mb-2 flex items-center">
+                        <BookOpen className="w-6 h-6 mr-2" />
+                        X-Code Academy
+                      </h3>
+                      <p className="text-gray-300 mb-4">
+                        A comprehensive 160-lesson journey across 4 courses to master coding fundamentals.
+                      </p>
+                      <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="bg-blue-800 bg-opacity-40 p-3 rounded-lg">
+                          <p className="text-sm text-gray-300">Courses</p>
+                          <p className="text-2xl font-bold">4</p>
+                        </div>
+                        <div className="bg-blue-800 bg-opacity-40 p-3 rounded-lg">
+                          <p className="text-sm text-gray-300">Lessons</p>
+                          <p className="text-2xl font-bold">160</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => onNavigate && onNavigate('xcode-academy')}
+                        className="bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium transition-colors flex items-center"
+                      >
+                        Start Learning <ArrowRight className="ml-2 w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="hidden md:block">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-blue-700 rounded-lg p-3 text-center">
+                          <Wand2 className="w-6 h-6 mx-auto mb-1" />
+                          <p className="text-xs">CS1</p>
+                          <p className="text-sm font-bold">Basics</p>
+                        </div>
+                        <div className="bg-red-700 rounded-lg p-3 text-center">
+                          <Sword className="w-6 h-6 mx-auto mb-1" />
+                          <p className="text-xs">CS2</p>
+                          <p className="text-sm font-bold">Functions</p>
+                        </div>
+                        <div className="bg-green-700 rounded-lg p-3 text-center">
+                          <Target className="w-6 h-6 mx-auto mb-1" />
+                          <p className="text-xs">CS3</p>
+                          <p className="text-sm font-bold">Objects</p>
+                        </div>
+                        <div className="bg-purple-700 rounded-lg p-3 text-center">
+                          <Crown className="w-6 h-6 mx-auto mb-1" />
+                          <p className="text-xs">CS4</p>
+                          <p className="text-sm font-bold">Advanced</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Gauntlet Mode */}
+                <div className="bg-gradient-to-r from-orange-900 to-red-900 p-6 rounded-2xl shadow-lg">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-2xl font-bold mb-2 flex items-center">
+                        <Trophy className="w-6 h-6 mr-2" />
+                        Gauntlet Challenge
+                      </h3>
+                      <p className="text-gray-300 mb-4">
+                        Test your skills with 100 progressively difficult dungeon challenges.
+                      </p>
+                      <button 
+                        onClick={() => onNavigate && onNavigate('gauntlet-selection')}
+                        className="bg-orange-600 hover:bg-orange-700 text-white py-3 px-6 rounded-lg font-medium transition-colors flex items-center"
+                      >
+                        Enter Gauntlet <ArrowRight className="ml-2 w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="hidden md:flex">
+                      <div className="flex items-center text-yellow-500">
+                        <Star className="w-8 h-8 fill-current" />
+                        <Star className="w-8 h-8 fill-current" />
+                        <Star className="w-8 h-8 fill-current" />
+                        <Star className="w-8 h-8" />
+                        <Star className="w-8 h-8" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Your Progress */}
+                <div className="bg-gray-800 p-6 rounded-2xl shadow-lg">
+                  <h3 className="text-xl font-bold mb-4">Your Progress</h3>
+                  <div className="w-full bg-gray-700 rounded-full h-4 mb-2">
+                    <div
+                      className="bg-gradient-to-r from-blue-500 to-purple-600 h-4 rounded-full transition-all duration-500 ease-out"
+                      style={{ width: `${progressPercentage}%` }}
+                    ></div>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-400">
+                    <p>Beginner</p>
+                    <p>Intermediate</p>
+                    <p>Advanced</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Development Tools Section */}
+            <div
+              id="section-tools"
+              className={`mb-12 transition-opacity duration-300 ${
+                activeSection === 'tools' ? 'opacity-100' : 'opacity-0 lg:hidden h-0 overflow-hidden'
+              }`}
+            >
+              <h2 className="text-3xl font-bold mb-6">Development Tools</h2>
+              <p className="text-gray-300 mb-8">
+                Powerful tools to bring your game ideas to life.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <button
+                  onClick={() => onNavigate && onNavigate('character-selector')}
+                  className="group bg-gradient-to-br from-green-600 to-teal-700 hover:from-green-700 hover:to-teal-800 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+                >
+                  <div className="p-3 bg-white bg-opacity-20 rounded-xl mb-4">
+                    <Users className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Character Selector</h3>
+                  <p className="text-gray-300">Create and animate game characters</p>
+                </button>
+
+                <button
+                  onClick={() => onNavigate && onNavigate('gauntlet-selection')}
+                  className="group bg-gradient-to-br from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+                >
+                  <div className="p-3 bg-white bg-opacity-20 rounded-xl mb-4">
+                    <Gamepad2 className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Gauntlet Mode</h3>
+                  <p className="text-gray-300">Challenge yourself with advanced scenarios</p>
+                </button>
+
+                <button
+                  onClick={() => onNavigate && onNavigate('audio-manager')}
+                  className="group bg-gradient-to-br from-purple-600 to-pink-700 hover:from-purple-700 hover:to-pink-800 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+                >
+                  <div className="p-3 bg-white bg-opacity-20 rounded-xl mb-4">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 001.414 1.414m2.828-9.9a9 9 0 012.728-2.728" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Audio Manager</h3>
+                  <p className="text-gray-300">Add and manage game sounds</p>
+                </button>
+
+                <button
+                  onClick={() => onNavigate && onNavigate('asset-workshop')}
+                  className="group bg-gradient-to-br from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+                >
+                  <div className="p-3 bg-white bg-opacity-20 rounded-xl mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">The Asset Workshop</h3>
+                  <p className="text-gray-300">Create and manage game assets</p>
+                </button>
+              </div>
+
+              <div className="mt-8 flex justify-center">
+                <button
+                  onClick={() => onNavigate && onNavigate('project-manager')}
+                  className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  <Save className="w-5 h-5" />
+                  <span>Manage Projects</span>
                 </button>
               </div>
             </div>
-          </div>
-        )}
 
-        {activeSection === 'tools' && (
-          <div className="space-y-8">
-            <div className="text-center">
-              <h2 className="text-3xl font-bold text-white mb-4">Development Tools</h2>
-              <p className="text-gray-300 text-lg">Everything you need to create amazing games</p>
-            </div>
+            {/* Create New Project */}
+            <div className="mb-12">
+              <h2 className="text-3xl font-bold mb-6">Start a New Project</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <button
+                  onClick={() => onNavigate && onNavigate('project-manager')}
+                  className="bg-gradient-to-br from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 text-white p-6 rounded-2xl border-2 border-dashed border-gray-500 hover:border-gray-400 transition-all duration-200 flex flex-col items-center justify-center space-y-4"
+                >
+                  <div className="p-3 bg-white bg-opacity-10 rounded-full">
+                    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold">Create New Project</h3>
+                  <p className="text-gray-400 text-center">Start fresh with a new game project</p>
+                </button>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <button
-                onClick={() => onNavigate('character-animator')}
-                className="group bg-gradient-to-br from-green-600 to-teal-700 hover:from-green-700 hover:to-teal-800 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
-              >
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="p-3 bg-white bg-opacity-20 rounded-xl">
-                    <User className="w-8 h-8" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-xl font-bold">Character Animator</h3>
-                    <p className="text-green-100">Design & Animate Heroes</p>
-                  </div>
-                </div>
-                <div className="text-left text-sm opacity-75 mb-4">
-                  Create characters and design their animations with our visual editor
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Create & Animate</span>
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </button>
-
-              <button
-                onClick={() => onNavigate('audio-manager')}
-                className="group bg-gradient-to-br from-purple-600 to-pink-700 hover:from-purple-700 hover:to-pink-800 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
-              >
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="p-3 bg-white bg-opacity-20 rounded-xl">
-                    <Volume2 className="w-8 h-8" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-xl font-bold">Audio Manager</h3>
-                    <p className="text-purple-100">Sound & Music</p>
-                  </div>
-                </div>
-                <div className="text-left text-sm opacity-75 mb-4">
-                  Upload, organize, and manage all your game audio assets
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Manage Audio</span>
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </button>
-
-              <button
-                onClick={() => onNavigate('asset-manager')}
-                className="group bg-gradient-to-br from-orange-600 to-red-700 hover:from-orange-700 hover:to-red-800 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
-              >
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="p-3 bg-white bg-opacity-20 rounded-xl">
-                    <Image className="w-8 h-8" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-xl font-bold">Asset Manager</h3>
-                    <p className="text-orange-100">Graphics & Sprites</p>
-                  </div>
-                </div>
-                <div className="text-left text-sm opacity-75 mb-4">
-                  Organize sprites, backgrounds, and visual assets
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Manage Assets</span>
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </button>
-
-              <div className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-6 rounded-2xl">
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="p-3 bg-white bg-opacity-20 rounded-xl">
-                    <Code className="w-8 h-8" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-xl font-bold">Code Editor</h3>
-                    <p className="text-blue-100">Built-in IDE</p>
-                  </div>
-                </div>
-                <div className="text-left text-sm opacity-75 mb-4">
-                  Advanced code editor with syntax highlighting and debugging
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Integrated in Academy</span>
-                  <Zap className="w-5 h-5 text-yellow-400" />
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-teal-600 to-cyan-700 text-white p-6 rounded-2xl">
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="p-3 bg-white bg-opacity-20 rounded-xl">
-                    <Palette className="w-8 h-8" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-xl font-bold">Sprite Manager</h3>
-                    <p className="text-teal-100">Animation System</p>
-                  </div>
-                </div>
-                <div className="text-left text-sm opacity-75 mb-4">
-                  Construct 3-style sprite animation management
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Integrated in Academy</span>
-                  <Zap className="w-5 h-5 text-yellow-400" />
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-gray-600 to-gray-700 text-white p-6 rounded-2xl opacity-60">
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="p-3 bg-white bg-opacity-20 rounded-xl">
-                    <Settings className="w-8 h-8" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-xl font-bold">Level Editor</h3>
-                    <p className="text-gray-300">Coming Soon</p>
-                  </div>
-                </div>
-                <div className="text-left text-sm opacity-75 mb-4">
-                  Visual level design tool for creating custom challenges
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">In Development</span>
-                  <Plus className="w-5 h-5" />
+                <div className="bg-gray-800 p-6 rounded-2xl">
+                  <h3 className="text-xl font-bold mb-4">Recent Projects</h3>
+                  <p className="text-gray-400">Your recent projects will appear here</p>
                 </div>
               </div>
             </div>
           </div>
-        )}
-
-        {activeSection === 'projects' && (
-          <div className="space-y-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-3xl font-bold text-white mb-2">Your Projects</h2>
-                <p className="text-gray-300 text-lg">Manage and organize your coding projects</p>
-              </div>
-              <button
-                onClick={() => onNavigate('project-manager')}
-                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
-              >
-                <Plus className="w-5 h-5" />
-                <span>New Project</span>
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Sample Projects */}
-              <div className="bg-white bg-opacity-10 rounded-2xl p-6 hover:bg-opacity-15 transition-all duration-200">
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="p-3 bg-blue-500 bg-opacity-20 rounded-xl">
-                    <Gamepad2 className="w-6 h-6 text-blue-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white">My First Game</h3>
-                    <p className="text-gray-300 text-sm">Simple platformer</p>
-                  </div>
-                </div>
-                <div className="text-sm text-gray-400 mb-4">
-                  Created 2 days ago • Last modified 1 hour ago
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-green-400">✓ Completed</span>
-                  <button className="text-blue-400 hover:text-blue-300 transition-colors">
-                    Open →
-                  </button>
-                </div>
-              </div>
-
-              <div className="bg-white bg-opacity-10 rounded-2xl p-6 hover:bg-opacity-15 transition-all duration-200">
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="p-3 bg-purple-500 bg-opacity-20 rounded-xl">
-                    <Code className="w-6 h-6 text-purple-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white">Loop Challenge</h3>
-                    <p className="text-gray-300 text-sm">Practice project</p>
-                  </div>
-                </div>
-                <div className="text-sm text-gray-400 mb-4">
-                  Created 1 week ago • Last modified 3 days ago
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-yellow-400">⚡ In Progress</span>
-                  <button className="text-blue-400 hover:text-blue-300 transition-colors">
-                    Open →
-                  </button>
-                </div>
-              </div>
-
-              <button
-                onClick={() => onNavigate('project-manager')}
-                className="bg-gradient-to-br from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 text-white p-6 rounded-2xl border-2 border-dashed border-gray-500 hover:border-gray-400 transition-all duration-200 flex flex-col items-center justify-center space-y-4"
-              >
-                <div className="p-4 bg-white bg-opacity-10 rounded-xl">
-                  <Plus className="w-8 h-8" />
-                </div>
-                <div className="text-center">
-                  <div className="font-bold text-lg">Create New Project</div>
-                  <div className="text-gray-300 text-sm">Start a new coding adventure</div>
-                </div>
-              </button>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );
 };
+
+export default Dashboard;
