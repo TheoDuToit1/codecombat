@@ -90,7 +90,6 @@ export const AudioManager: React.FC<AudioManagerProps> = ({ onBack }) => {
 
         setAudioFiles(prev => [...prev, newAudioFile]);
       } catch (error) {
-        console.error('Error loading audio file:', error);
         alert(`Error loading ${file.name}`);
         URL.revokeObjectURL(url);
       }
@@ -225,7 +224,7 @@ export const AudioManager: React.FC<AudioManagerProps> = ({ onBack }) => {
                 {categories.map(({ id, label, icon: Icon, count }) => (
                   <button
                     key={id}
-                    onClick={() => setActiveCategory(id as any)}
+                    onClick={() => setActiveCategory(id as unknown as 'all' | 'music' | 'sfx' | 'voice')}
                     className={`
                       w-full flex items-center justify-between p-3 rounded-xl transition-all duration-200
                       ${activeCategory === id 

@@ -2,7 +2,7 @@ import { SpriteAnimation, SpriteDirection } from '../types/game';
 
 export type AnimationType = 'idle' | 'walk' | 'attack' | 'death';
 export type Direction = 'down' | 'left' | 'right' | 'up';
-export type CharacterClass = 'warrior' | 'wizard' | 'elf' | 'valkyrie';
+export type CharacterClass = 'warrior' | 'wizard' | 'elf' | 'assassin' | 'mage';
 
 // Statically import all possible frames for all classes/types/directions
 const allFrames: Record<CharacterClass, Record<string, Record<string, string>>> = {
@@ -60,23 +60,41 @@ const allFrames: Record<CharacterClass, Record<string, Record<string, string>>> 
     death_right: import.meta.glob('/src/assets/characters/elf/death_right/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
     death_up: import.meta.glob('/src/assets/characters/elf/death_up/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
   },
-  valkyrie: {
-    idle_down: import.meta.glob('/src/assets/characters/valkyrie/idle_down/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
-    idle_left: import.meta.glob('/src/assets/characters/valkyrie/idle_left/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
-    idle_right: import.meta.glob('/src/assets/characters/valkyrie/idle_right/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
-    idle_up: import.meta.glob('/src/assets/characters/valkyrie/idle_up/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
-    walk_down: import.meta.glob('/src/assets/characters/valkyrie/walk_down/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
-    walk_left: import.meta.glob('/src/assets/characters/valkyrie/walk_left/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
-    walk_right: import.meta.glob('/src/assets/characters/valkyrie/walk_right/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
-    walk_up: import.meta.glob('/src/assets/characters/valkyrie/walk_up/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
-    attack_down: import.meta.glob('/src/assets/characters/valkyrie/attack_down/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
-    attack_left: import.meta.glob('/src/assets/characters/valkyrie/attack_left/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
-    attack_right: import.meta.glob('/src/assets/characters/valkyrie/attack_right/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
-    attack_up: import.meta.glob('/src/assets/characters/valkyrie/attack_up/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
-    death_down: import.meta.glob('/src/assets/characters/valkyrie/death_down/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
-    death_left: import.meta.glob('/src/assets/characters/valkyrie/death_left/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
-    death_right: import.meta.glob('/src/assets/characters/valkyrie/death_right/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
-    death_up: import.meta.glob('/src/assets/characters/valkyrie/death_up/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+  assassin: {
+    idle_down: import.meta.glob('/src/assets/characters/assassin/idle_down/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    idle_left: import.meta.glob('/src/assets/characters/assassin/idle_left/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    idle_right: import.meta.glob('/src/assets/characters/assassin/idle_right/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    idle_up: import.meta.glob('/src/assets/characters/assassin/idle_up/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    walk_down: import.meta.glob('/src/assets/characters/assassin/walk_down/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    walk_left: import.meta.glob('/src/assets/characters/assassin/walk_left/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    walk_right: import.meta.glob('/src/assets/characters/assassin/walk_right/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    walk_up: import.meta.glob('/src/assets/characters/assassin/walk_up/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    attack_down: import.meta.glob('/src/assets/characters/assassin/attack_down/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    attack_left: import.meta.glob('/src/assets/characters/assassin/attack_left/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    attack_right: import.meta.glob('/src/assets/characters/assassin/attack_right/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    attack_up: import.meta.glob('/src/assets/characters/assassin/attack_up/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    death_down: import.meta.glob('/src/assets/characters/assassin/death_down/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    death_left: import.meta.glob('/src/assets/characters/assassin/death_left/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    death_right: import.meta.glob('/src/assets/characters/assassin/death_right/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    death_up: import.meta.glob('/src/assets/characters/assassin/death_up/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+  },
+  mage: {
+    idle_down: import.meta.glob('/src/assets/characters/mage/idle_down/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    idle_left: import.meta.glob('/src/assets/characters/mage/idle_left/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    idle_right: import.meta.glob('/src/assets/characters/mage/idle_right/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    idle_up: import.meta.glob('/src/assets/characters/mage/idle_up/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    walk_down: import.meta.glob('/src/assets/characters/mage/walk_down/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    walk_left: import.meta.glob('/src/assets/characters/mage/walk_left/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    walk_right: import.meta.glob('/src/assets/characters/mage/walk_right/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    walk_up: import.meta.glob('/src/assets/characters/mage/walk_up/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    attack_down: import.meta.glob('/src/assets/characters/mage/Swing_Down/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    attack_left: import.meta.glob('/src/assets/characters/mage/Swing_Left/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    attack_right: import.meta.glob('/src/assets/characters/mage/Swing_Right/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    attack_up: import.meta.glob('/src/assets/characters/mage/Swing_Up/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+    death_down: {},
+    death_left: {},
+    death_right: {},
+    death_up: {},
   },
 };
 
@@ -94,38 +112,13 @@ export function loadCharacterAnimations(characterClass: CharacterClass): Record<
   const animations: Record<string, SpriteAnimation> = {};
 
   for (const animType of animationTypes) {
-    const directionsObj: Record<Direction, SpriteDirection> = {
-      down: { frames: [], frameCount: 0, animationSpeed: 150, loop: true },
-      left: { frames: [], frameCount: 0, animationSpeed: 150, loop: true },
-      right: { frames: [], frameCount: 0, animationSpeed: 150, loop: true },
-      up: { frames: [], frameCount: 0, animationSpeed: 150, loop: true },
-    };
-
+    const stateKey = animType.toLowerCase();
+    animations[stateKey] = {};
     for (const dir of directions) {
+      const dirKey = dir.toLowerCase();
       const urls = getFrameUrls(characterClass, animType, dir);
-      const frames = urls.map((url, idx) => ({
-        id: `frame_${idx}`,
-        url,
-        width: 64, // Set your frame width
-        height: 64, // Set your frame height
-        sourceX: 0,
-        sourceY: 0,
-      }));
-      if (frames.length > 0) {
-        directionsObj[dir] = {
-          frames,
-          frameCount: frames.length,
-          animationSpeed: 150,
-          loop: animType !== 'death',
-        };
-      }
+      animations[stateKey][dirKey] = urls;
     }
-
-    animations[animType] = {
-      id: animType,
-      name: animType,
-      directions: directionsObj,
-    };
   }
 
   return animations;

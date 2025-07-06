@@ -3,10 +3,10 @@ import { Terminal, CheckCircle, XCircle, Info } from 'lucide-react';
 
 interface ExecutionLogProps {
   logs: string[];
-  isRunning: boolean;
+  isRunning?: boolean;
 }
 
-export const ExecutionLog: React.FC<ExecutionLogProps> = ({ logs, isRunning }) => {
+export const ExecutionLog: React.FC<ExecutionLogProps> = ({ logs, isRunning = false }) => {
   const getLogIcon = (log: string) => {
     if (log.includes('Error') || log.includes('Failed')) {
       return <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Play, 
   Users, 
@@ -23,10 +23,13 @@ import {
   Save,
   User,
   Layers,
-  Upload
+  Upload,
+  Map as MapIcon
 } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 import { CrewMember } from '../data/story';
 import { CharacterAnimator } from './CharacterAnimator';
+import { ProgressService } from '../services/ProgressService';
 
 interface DashboardProps {
   onNavigate?: (view: 
@@ -38,6 +41,7 @@ interface DashboardProps {
     | 'asset-workshop' 
     | 'character-selector'
     | 'character-carousel'
+    | 'character-demo'
     | 'audio-manager'
     | 'asset-manager'
     | 'sprite-upload'
@@ -67,8 +71,25 @@ const Dashboard: React.FC<DashboardProps> = ({
   onShowLessonPlan
 }) => {
   const [activeSection, setActiveSection] = useState('overview');
+  const [localProgress, setLocalProgress] = useState(currentProgress);
+  const navigate = useNavigate();
 
-  const progressPercentage = (currentProgress / 160) * 100;
+  // Update local progress when prop changes
+  useEffect(() => {
+    setLocalProgress(currentProgress);
+  }, [currentProgress]);
+
+  // Load progress from service if not provided via props
+  useEffect(() => {
+    if (currentProgress === 0) {
+      const savedProgress = ProgressService.getCurrentProgress();
+      if (savedProgress > 0) {
+        setLocalProgress(savedProgress);
+      }
+    }
+  }, [currentProgress]);
+
+  const progressPercentage = (localProgress / 160) * 100;
 
   const handleSectionChange = (section: string) => {
     setActiveSection(section);
@@ -130,7 +151,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   ></div>
                 </div>
                 <p className="text-sm text-gray-400">
-                  {currentProgress} / 160 points ({Math.round(progressPercentage)}%)
+                  {localProgress} / 160 points ({Math.round(progressPercentage)}%)
                 </p>
               </div>
             </div>
@@ -206,17 +227,17 @@ const Dashboard: React.FC<DashboardProps> = ({
                         </div>
                       ))
                     ) : (
-                      <p className="text-gray-400">Complete tutorials to recruit crew members</p>
+                      <div className="text-center py-4">
+                        <p className="text-gray-400 mb-2">No crew members yet</p>
+                        <button
+                          onClick={onShowCrewIntro}
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm"
+                        >
+                          Meet the Crew
+                        </button>
+                      </div>
                     )}
                   </div>
-                  
-                  <button
-                    onClick={() => onNavigate && onNavigate('xcode-academy')}
-                    className="w-full bg-white bg-opacity-20 hover:bg-opacity-30 text-white py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2"
-                  >
-                    <Play className="w-4 h-4" />
-                    <span>Start Adventure</span>
-                  </button>
                 </div>
               </div>
             </div>
@@ -351,51 +372,58 @@ const Dashboard: React.FC<DashboardProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <button
-                  onClick={() => onNavigate && onNavigate('character-selector')}
+                  onClick={() => navigate('/character-selector')}
                   className="group bg-gradient-to-br from-green-600 to-teal-700 hover:from-green-700 hover:to-teal-800 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
                 >
                   <div className="p-3 bg-white bg-opacity-20 rounded-xl mb-4">
-                    <Users className="w-6 h-6" />
+                    <Users className="w-8 h-8" />
                   </div>
                   <h3 className="text-xl font-bold mb-2">Character Selector</h3>
                   <p className="text-gray-300">Create and animate game characters</p>
                 </button>
 
                 <button
-                  onClick={() => onNavigate && onNavigate('gauntlet-selection')}
+                  onClick={() => navigate('/gauntlet-mode')}
                   className="group bg-gradient-to-br from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
                 >
                   <div className="p-3 bg-white bg-opacity-20 rounded-xl mb-4">
-                    <Gamepad2 className="w-6 h-6" />
+                    <Gamepad2 className="w-8 h-8" />
                   </div>
                   <h3 className="text-xl font-bold mb-2">Gauntlet Mode</h3>
                   <p className="text-gray-300">Challenge yourself with advanced scenarios</p>
                 </button>
 
                 <button
-                  onClick={() => onNavigate && onNavigate('audio-manager')}
-                  className="group bg-gradient-to-br from-purple-600 to-pink-700 hover:from-purple-700 hover:to-pink-800 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+                  onClick={() => navigate('/audio-manager')}
+                  className="group bg-gradient-to-br from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
                 >
                   <div className="p-3 bg-white bg-opacity-20 rounded-xl mb-4">
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 001.414 1.414m2.828-9.9a9 9 0 012.728-2.728" />
-                    </svg>
+                    <Volume2 className="w-8 h-8" />
                   </div>
                   <h3 className="text-xl font-bold mb-2">Audio Manager</h3>
                   <p className="text-gray-300">Add and manage game sounds</p>
                 </button>
 
                 <button
-                  onClick={() => onNavigate && onNavigate('asset-workshop')}
-                  className="group bg-gradient-to-br from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+                  onClick={() => navigate('/asset-workshop')}
+                  className="group bg-gradient-to-br from-green-700 to-green-500 hover:from-green-800 hover:to-green-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
                 >
                   <div className="p-3 bg-white bg-opacity-20 rounded-xl mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-                    </svg>
+                    <Layers className="w-8 h-8" />
                   </div>
                   <h3 className="text-xl font-bold mb-2">The Asset Workshop</h3>
                   <p className="text-gray-300">Create and manage game assets</p>
+                </button>
+
+                <button
+                  onClick={() => navigate('/map-editor')}
+                  className="group bg-gradient-to-br from-cyan-600 to-blue-700 hover:from-cyan-700 hover:to-blue-800 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+                >
+                  <div className="p-3 bg-white bg-opacity-20 rounded-xl mb-4">
+                    <MapIcon className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Map Editor</h3>
+                  <p className="text-gray-300">Visually build and test your game maps</p>
                 </button>
               </div>
 

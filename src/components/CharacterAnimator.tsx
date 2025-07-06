@@ -46,7 +46,7 @@ export const CharacterAnimator: React.FC<CharacterAnimatorProps> = ({
             </button>
             
             <div className="text-center">
-              <h1 className="text-3xl font-bold">🎮 Character Animator</h1>
+              <h1 className="text-3xl font-bold">🎮 Character Selector</h1>
               <p className="text-purple-100">Create and animate your hero</p>
             </div>
             

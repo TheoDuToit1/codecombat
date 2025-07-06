@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { BookOpen, Clock, Star, Trophy, Lock, CheckCircle, Target, Users, Zap, Award } from 'lucide-react';
+import { BookOpen, Clock, Star, Trophy, Lock, CheckCircle, Target, Users, Zap, Award, Map, ScrollText } from 'lucide-react';
 import { LESSON_PLAN, COURSES, ACHIEVEMENTS, Lesson, Course } from '../data/lessonPlan';
+import { CS1_STORY, CS1_STORY_OVERVIEW, getStoryData } from '../data/lessonStory';
 
 interface LessonPlanViewerProps {
   isOpen: boolean;
@@ -183,6 +184,24 @@ export const LessonPlanViewer: React.FC<LessonPlanViewerProps> = ({
                 </div>
               )}
 
+              {/* Story Overview for CS1 */}
+              {selectedCourse === 'cs1' && (
+                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4 mb-4">
+                  <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                    <Map className="w-4 h-4 mr-2" />
+                    🌍 X-Code Quest: CS1
+                  </h3>
+                  <div className="text-sm text-gray-700 space-y-2">
+                    <div className="text-xs text-gray-600">
+                      <strong>Mentor:</strong> {CS1_STORY_OVERVIEW.mentor} | <strong>World:</strong> {CS1_STORY_OVERVIEW.world}
+                    </div>
+                    <div className="text-xs leading-relaxed">
+                      {CS1_STORY_OVERVIEW.overview}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 {courseLessons.map((lesson) => {
                   const isUnlocked = isLessonUnlocked(lesson);
@@ -234,6 +253,15 @@ export const LessonPlanViewer: React.FC<LessonPlanViewerProps> = ({
                           🎉 Unlocks: {lesson.unlocks}
                         </div>
                       )}
+                      {/* Quest Update for CS1 */}
+                      {selectedCourse === 'cs1' && (() => {
+                        const storyData = getStoryData(lesson.id);
+                        return storyData ? (
+                          <div className="text-xs text-orange-600 mt-1 font-medium">
+                            ⚔️ {storyData.questUpdate}
+                          </div>
+                        ) : null;
+                      })()}
                     </div>
                   );
                 })}
@@ -258,6 +286,28 @@ export const LessonPlanViewer: React.FC<LessonPlanViewerProps> = ({
                       Mentor: {selectedLesson.mentor}
                     </div>
                   </div>
+
+                  {/* Your Quest Section */}
+                  {selectedCourse === 'cs1' && (() => {
+                    const storyData = getStoryData(selectedLesson.id);
+                    return storyData ? (
+                      <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-4">
+                        <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
+                          <ScrollText className="w-4 h-4 mr-1" />
+                          ⚔️ Your Quest
+                        </h4>
+                        <div className="text-sm text-gray-700 space-y-2">
+                          <div className="font-medium text-orange-700">{storyData.title}</div>
+                          <div className="text-xs leading-relaxed">
+                            {storyData.questUpdate}
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            <strong>Setting:</strong> {storyData.setting}
+                          </div>
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
 
                   <div className="space-y-3">
                     <div>

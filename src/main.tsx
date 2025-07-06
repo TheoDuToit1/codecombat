@@ -1,8 +1,13 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { loader } from '@monaco-editor/react';
+import { BrowserRouter } from 'react-router-dom';
 import App from './App.tsx';
 import './index.css';
+import { checkEnv } from './checkEnv.ts';
+
+// Check environment variables
+checkEnv();
 
 // Configure Monaco Editor to use CDN
 loader.config({
@@ -13,6 +18,8 @@ loader.config({
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </StrictMode>
 );

@@ -6,7 +6,7 @@ interface GameStatsProps {
   character: Character;
   level: number;
   totalLevels: number;
-  moves: number;
+  moves?: number;
   score: number;
   objective: string;
 }
@@ -15,7 +15,7 @@ export const GameStats: React.FC<GameStatsProps> = ({
   character,
   level,
   totalLevels,
-  moves,
+  moves = 0,
   score,
   objective
 }) => {

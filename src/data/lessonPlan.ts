@@ -79,46 +79,47 @@ export const COURSES: Course[] = [
 export const LESSON_PLAN: Lesson[] = [
   
   // 🧙‍♂️ CS1: CODE BASICS (Lessons 1-40) - Sage the Wizard
-  // Week 1: First Steps (Lessons 1-8)
+  // Setting 1: Syntaxia Courtyard (Lessons 1 & 2)
   {
-    id: 1, courseId: 'cs1', lessonNumber: 1, name: 'Meet Your Hero', concept: 'Introduction',
-    difficulty: 1, mentor: 'Sage', estimatedTime: 15,
-    description: 'Learn to control your hero and take your first steps!',
-    objectives: ['Move your hero right', 'Understand the game grid', 'Complete your first level'],
-    newConcepts: ['hero.moveRight()', 'Game coordinates', 'Basic commands'],
-    practiceSkills: ['Following instructions', 'Basic movement'],
-    codeExample: 'hero.moveRight();\nhero.moveRight();\nhero.moveRight();',
-    hints: ['Click Run to execute your code', 'Each command moves one space', 'Watch your hero move step by step']
+    id: 1, courseId: 'cs1', lessonNumber: 1, name: 'Meet Your Hero', concept: 'Movement',
+    difficulty: 1, mentor: 'Sage', estimatedTime: 10,
+    description: 'Cross the Syntaxia Courtyard and reach the sparkling fountain.',
+    objectives: ['Move your hero up twice to reach the fountain', 'Understand grid movement', 'Complete your first quest'],
+    newConcepts: ['hero.move_up()'],
+    practiceSkills: ['Basic movement', 'Following instructions'],
+    codeExample: 'hero.move_up()\nhero.move_up()',
+    hints: ['Each move_up() command moves your hero one space up.', 'The fountain is above your starting point.', 'Use the Run button to see your hero move.']
   },
   {
-    id: 2, courseId: 'cs1', lessonNumber: 2, name: 'Four Directions', concept: 'Movement',
-    difficulty: 1, mentor: 'Sage', estimatedTime: 15,
-    description: 'Master all four movement directions!',
-    objectives: ['Move up, down, left, and right', 'Navigate around obstacles', 'Reach the exit'],
-    newConcepts: ['hero.moveUp()', 'hero.moveDown()', 'hero.moveLeft()'],
-    practiceSkills: ['Directional movement', 'Path planning'],
-    codeExample: 'hero.moveRight();\nhero.moveDown();\nhero.moveLeft();\nhero.moveUp();',
-    hints: ['Plan your path before coding', 'Obstacles block movement', 'Try different routes']
+    id: 2, courseId: 'cs1', lessonNumber: 2, name: 'Directions and Movement', concept: 'Movement',
+    difficulty: 1, mentor: 'Sage', estimatedTime: 10,
+    description: 'Visit the four corners of the Syntaxia Courtyard.',
+    objectives: ['Move in all four directions', 'Explore the courtyard corners', 'Practice path planning'],
+    newConcepts: ['hero.move_up()', 'hero.move_left()', 'hero.move_down()', 'hero.move_right()'],
+    practiceSkills: ['Directional movement', 'Exploration'],
+    codeExample: 'hero.move_left()\nhero.move_down()\nhero.move_right()\nhero.move_up()',
+    hints: ['Try each direction command once.', 'Plan your path to visit each corner.', 'You can use the commands in any order.']
+  },
+  // Setting 2: Side Streets of Syntaxia (Lessons 3 & 4)
+  {
+    id: 3, courseId: 'cs1', lessonNumber: 3, name: 'Collecting Coins', concept: 'Collecting',
+    difficulty: 1, mentor: 'Sage', estimatedTime: 12,
+    description: 'Collect all the coins in the side streets of Syntaxia.',
+    objectives: ['Move right to collect coins', 'Use if statements to check for coins', 'Collect every coin you find'],
+    newConcepts: ['for i in range()', 'hero.move_right()', 'hero.is_on_coin()', 'hero.collect()'],
+    practiceSkills: ['Loops', 'Conditional collection'],
+    codeExample: 'for i in range(3):\n    hero.move_right()\n    if hero.is_on_coin():\n        hero.collect()',
+    hints: ['Use a loop to move right three times.', 'Check for a coin at each step.', 'Collect the coin if you are on it.']
   },
   {
-    id: 3, courseId: 'cs1', lessonNumber: 3, name: 'Collecting Gems', concept: 'Objectives',
-    difficulty: 1, mentor: 'Sage', estimatedTime: 20,
-    description: 'Learn to collect treasures on your journey!',
-    objectives: ['Collect all gems', 'Move to gem locations', 'Understand automatic collection'],
-    newConcepts: ['Collectible items', 'Automatic pickup', 'Multiple objectives'],
-    practiceSkills: ['Multi-step planning', 'Objective completion'],
-    codeExample: 'hero.moveRight();\nhero.moveRight(); // Collect gem\nhero.moveDown();',
-    hints: ['Gems are collected automatically', 'Visit every gem location', 'Plan an efficient route']
-  },
-  {
-    id: 4, courseId: 'cs1', lessonNumber: 4, name: 'Counting Steps', concept: 'Repetition',
-    difficulty: 2, mentor: 'Sage', estimatedTime: 20,
-    description: 'Learn to repeat commands efficiently!',
-    objectives: ['Use bracket notation', 'Move multiple spaces at once', 'Write shorter code'],
-    newConcepts: ['hero.moveRight(3)', 'Bracket notation', 'Command repetition'],
-    practiceSkills: ['Code efficiency', 'Counting', 'Pattern recognition'],
-    codeExample: 'hero.moveRight(3); // Same as 3 moveRight commands\nhero.moveDown(2);',
-    hints: ['Count the spaces you need to move', 'Use numbers in parentheses', 'This makes code shorter and cleaner']
+    id: 4, courseId: 'cs1', lessonNumber: 4, name: 'Counting Steps', concept: 'Loops',
+    difficulty: 2, mentor: 'Sage', estimatedTime: 12,
+    description: 'Follow the path to the alley\'s end in the side streets.',
+    objectives: ['Use a loop to move right five times', 'Move up to reach the alley\'s end'],
+    newConcepts: ['for i in range()', 'hero.move_right()', 'hero.move_up()'],
+    practiceSkills: ['Loops', 'Path following'],
+    codeExample: 'for i in range(5):\n    hero.move_right()\nhero.move_up()',
+    hints: ['Use a for loop for repeated movement.', 'After moving right, move up once to finish.', 'Loops make your code shorter and easier to read.']
   },
   {
     id: 5, courseId: 'cs1', lessonNumber: 5, name: 'Variables Basics', concept: 'Variables',

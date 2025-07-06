@@ -229,7 +229,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({ onBack }) => {
                 {statusFilters.map(({ id, label, count }) => (
                   <button
                     key={id}
-                    onClick={() => setActiveFilter(id as any)}
+                    onClick={() => setActiveFilter(id as unknown as 'all' | 'active' | 'completed' | 'archived')}
                     className={`
                       w-full flex items-center justify-between p-3 rounded-xl transition-all duration-200
                       ${activeFilter === id 

@@ -164,8 +164,9 @@ export class CodeExecutor {
       moveDown: () => this.move(0, 1, 'down'),
       attack: () => this.attack(),
       isEnemyNear: () => this.isEnemyNear(),
-      distanceTo: (target: any) => this.distanceTo(target),
+      distanceTo: (target: unknown) => this.distanceTo(target),
       say: (message: string) => this.say(message),
+      spawnAngryPea: () => this.spawnAngryPea(),
       get health() { return this.gameState.character.health; },
       get gems() { return this.gameState.character.gems; },
       get hasKey() { return this.gameState.character.hasKey; },
@@ -207,7 +208,7 @@ export class CodeExecutor {
     this.checkObstacles(newX, newY);
     
     // Update direction
-    this.gameState.character.direction = direction as any;
+    this.gameState.character.direction = direction as Character["direction"];
   }
 
   private attack(): void {
@@ -340,5 +341,64 @@ export class CodeExecutor {
 
   private addLog(message: string): void {
     this.logs.push(`[${new Date().toLocaleTimeString()}] ${message}`);
+  }
+
+  private spawnAngryPea(): void {
+    const { x, y } = this.gameState.character.position;
+    
+    // Define possible spawn positions around the character
+    const spawnPositions = [
+      { x: x + 1, y: y },
+      { x: x - 1, y: y },
+      { x: x, y: y + 1 },
+      { x: x, y: y - 1 }
+    ];
+    
+    // Filter valid positions (not walls, not occupied)
+    const validPositions = spawnPositions.filter(pos => {
+      // Check bounds
+      const level = this.getCurrentLevel();
+      if (pos.x < 0 || pos.x >= level.gridSize.width || pos.y < 0 || pos.y >= level.gridSize.height) {
+        return false;
+      }
+      
+      // Check for walls
+      const isWall = this.gameState.obstacles.some(
+        obs => obs.position.x === pos.x && obs.position.y === pos.y && obs.type === 'wall'
+      );
+      if (isWall) return false;
+      
+      // Check for enemies
+      const hasEnemy = this.gameState.enemies.some(
+        enemy => enemy.position.x === pos.x && enemy.position.y === pos.y && enemy.isAlive
+      );
+      if (hasEnemy) return false;
+      
+      return true;
+    });
+    
+    if (validPositions.length > 0) {
+      // Choose a random valid position
+      const spawnPos = validPositions[Math.floor(Math.random() * validPositions.length)];
+      
+      // Create a new angrypea enemy
+      const newEnemy: Enemy = {
+        id: `angrypea_${Date.now()}`,
+        type: 'grunt', // Using 'grunt' type as it's in the Enemy interface
+        position: { ...spawnPos },
+        health: 15,
+        maxHealth: 15,
+        damage: 5,
+        isAlive: true,
+        speed: 1,
+        behavior: 'chase',
+      };
+      
+      // Add to game state
+      this.gameState.enemies.push(newEnemy);
+      this.addLog(`🌱 An angry pea spawned next to you at (${spawnPos.x}, ${spawnPos.y})!`);
+    } else {
+      this.addLog('❌ No valid position to spawn an angry pea!');
+    }
   }
 }

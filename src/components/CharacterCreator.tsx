@@ -11,7 +11,7 @@ interface CharacterStats {
 
 interface Character {
   name: string;
-  class: 'warrior' | 'wizard' | 'elf' | 'valkyrie';
+  class: 'warrior' | 'wizard' | 'elf' | 'assassin';
   appearance: {
     skinTone: string;
     hairColor: string;
@@ -77,12 +77,12 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({
       baseStats: { strength: 5, magic: 6, speed: 9, wisdom: 6, health: 90 }
     },
     {
-      id: 'valkyrie',
-      name: 'Valkyrie',
-      description: 'Noble and organized, masters of leadership',
-      icon: '👑',
+      id: 'assassin',
+      name: 'Assassin',
+      description: 'Agile and stealthy, masters of critical strikes',
+      icon: '🗡️',
       color: 'from-purple-500 to-purple-700',
-      baseStats: { strength: 6, magic: 7, speed: 7, wisdom: 8, health: 100 }
+      baseStats: { strength: 6, magic: 4, speed: 9, wisdom: 7, health: 90 }
     }
   ];
 
@@ -110,7 +110,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({
     if (selectedClass) {
       setCharacter(prev => ({
         ...prev,
-        class: classId as any,
+        class: classId as unknown as Character['class'],
         stats: { ...selectedClass.baseStats }
       }));
       setAvailablePoints(10);
@@ -276,7 +276,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({
                 ].map(({ id, label, icon: Icon }) => (
                   <button
                     key={id}
-                    onClick={() => setActiveTab(id as any)}
+                    onClick={() => setActiveTab(id as unknown as typeof activeTab)}
                     className={`
                       flex items-center space-x-2 px-4 py-3 border-b-2 transition-all duration-200
                       ${activeTab === id 

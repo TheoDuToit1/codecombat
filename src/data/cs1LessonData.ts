@@ -20,247 +20,817 @@ export interface CS1Lesson {
   unlocks?: string;
 }
 
-export const CS1_LESSONS: CS1Lesson[] = [
-  // Week 1: First Steps
+export const CS1_LESSONS = [
+  // Week 1: First Steps (Settings 1 & 2)
   {
     id: 1,
     lessonNumber: 1,
     title: "Meet Your Hero",
-    description: "Learn to control your character and make your first moves in the coding world.",
-    concept: "Basic Movement",
-    objectives: [
-      "Understand the game controls",
-      "Move your character across the screen",
-      "Complete your first objective"
-    ],
+    description: "Cross the Syntaxia Courtyard and reach the sparkling fountain.",
+    codeExample: "hero.moveUp()\nhero.moveUp()",
+    goals: ["Move your hero to reach the fountain", "Understand grid movement", "Complete your first quest"],
+    concept: "Movement",
     difficulty: 1,
     estimatedTime: 10,
-    mentor: {
-      name: "Sage the Wizard",
-      icon: "🧙‍♂️"
-    },
+    hints: ["Each moveUp() command moves your hero one space up.", "The fountain is above your starting point.", "Use the Run button to see your hero move."],
+    unlocks: "",
     week: 1,
-    codeExample: "moveRight();\nmoveDown();\n// This is your first code!",
-    hints: [
-      "Use arrow keys or click where you want to go",
-      "Try to explore all areas of the map"
-    ]
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
   },
   {
     id: 2,
     lessonNumber: 2,
-    title: "Four Directions",
-    description: "Learn how to move in all four directions to navigate the world.",
-    concept: "Directional Movement",
-    objectives: [
-      "Move in all four directions",
-      "Navigate around obstacles",
-      "Reach the checkpoint"
-    ],
+    title: "Directions and Movement",
+    description: "Visit the four corners of the Syntaxia Courtyard.",
+    codeExample: "hero.moveLeft()\nhero.moveDown()\nhero.moveRight()\nhero.moveUp()",
+    goals: ["Move in all four directions", "Explore the courtyard corners", "Practice path planning"],
+    concept: "Movement",
     difficulty: 1,
-    estimatedTime: 15,
-    mentor: {
-      name: "Sage the Wizard",
-      icon: "🧙‍♂️"
-    },
+    estimatedTime: 10,
+    hints: ["Try each direction command once.", "Plan your path to visit each corner.", "You can use the commands in any order."],
+    unlocks: "",
     week: 1,
-    codeExample: "moveUp();\nmoveRight();\nmoveDown();\nmoveLeft();\n// You've gone in a circle!",
-    hints: [
-      "Different terrain may slow down or speed up movement",
-      "Plan your route before moving"
-    ]
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
   },
   {
     id: 3,
     lessonNumber: 3,
-    title: "Collecting Gems",
-    description: "Learn to collect gems and complete automatic objectives.",
-    concept: "Interaction",
-    objectives: [
-      "Collect all gems on the map",
-      "Learn how to interact with objects",
-      "Follow objective markers"
-    ],
+    title: "Move Multiple Steps",
+    description: "Learn how to move your hero several spaces at once by adding a number in the brackets.",
+    codeExample: "hero.moveDown(7)",
+    goals: ["Move your hero multiple spaces in one command."],
+    concept: "Movement",
     difficulty: 1,
-    estimatedTime: 15,
-    mentor: {
-      name: "Sage the Wizard",
-      icon: "🧙‍♂️"
-    },
-    week: 1,
-    codeExample: "moveRight();\ncollect();\nmoveLeft();\n// You collected a gem!",
+    estimatedTime: 10,
     hints: [
-      "You must be next to an item to collect it",
-      "Some gems may be hidden - explore thoroughly"
-    ]
+      "Add a number in the brackets to move more than one space, e.g., hero.moveDown(7)",
+      "Try different numbers to see how far your hero moves!",
+      "You can use hero.moveUp(n), hero.moveDown(n), hero.moveLeft(n), or hero.moveRight(n) with any number n."
+    ],
+    unlocks: "",
+    week: 1,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
   },
   {
     id: 4,
     lessonNumber: 4,
-    title: "Counting Steps",
-    description: "Learn about bracket notation basics and how to count steps.",
-    concept: "Variables",
-    objectives: [
-      "Understand step counting",
-      "Use variables to store counts",
-      "Complete a path with minimum steps"
+    title: "Waypoint Challenge",
+    description: "Reach all four waypoints in only 4 moves using multi-step movement. Each move must use a number in the brackets.",
+    codeExample: "hero.moveDown(3)\nhero.moveLeft(3)\nhero.moveUp(9)\nhero.moveRight(4)",
+    goals: [
+      "Reach all four waypoints in order: (11,14) → (8,14) → (8,5) → (12,5)",
+      "Use exactly 4 movement commands, each with a number in the brackets."
     ],
+    concept: "Movement",
     difficulty: 2,
-    estimatedTime: 20,
-    mentor: {
-      name: "Sage the Wizard",
-      icon: "🧙‍♂️"
-    },
-    week: 1,
-    codeExample: "let steps = 0;\nsteps = steps + 1;\nmoveRight();\n// You've taken one step!",
+    estimatedTime: 12,
     hints: [
-      "Variables can be updated throughout your code",
-      "Try to minimize your steps for bonus points"
-    ]
+      "Use hero.moveUp(n), hero.moveDown(n), hero.moveLeft(n), or hero.moveRight(n) with a number to move multiple spaces.",
+      "You must use exactly 4 movement commands to reach all waypoints in order.",
+      "Try to plan your path before coding!"
+    ],
+    unlocks: "",
+    week: 1,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
   },
   {
     id: 5,
     lessonNumber: 5,
-    title: "Variables Basics",
-    description: "Learn to store and retrieve data with variables.",
-    concept: "Variables",
-    objectives: [
-      "Create your first variable",
-      "Modify variable values",
-      "Use variables to track game state"
-    ],
-    difficulty: 2,
-    estimatedTime: 20,
-    mentor: {
-      name: "Sage the Wizard",
-      icon: "🧙‍♂️"
-    },
+    title: "What is a Variable?",
+    description: "Store and reuse values in code.",
+    codeExample: "let steps = 4; for (let i = 0; i < steps; i++) hero.moveDown();",
+    goals: ["Understand variables and dynamic logic."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: ["Try changing the value of your variable to see how it affects your code!"],
+    unlocks: "",
     week: 1,
-    codeExample: "let gemCount = 0;\ngemCount = gemCount + 1;\n// Now you're tracking gems!",
-    hints: [
-      "Variables can hold numbers, text, or other data",
-      "Use descriptive names for your variables"
-    ]
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
   },
   {
     id: 6,
     lessonNumber: 6,
-    title: "Health and Status",
-    description: "Monitor health conditions and status effects in the game.",
-    concept: "State Monitoring",
-    objectives: [
-      "Track health points",
-      "Understand status effects",
-      "Maintain positive health"
-    ],
-    difficulty: 2,
-    estimatedTime: 20,
-    mentor: {
-      name: "Sage the Wizard",
-      icon: "🧙‍♂️"
-    },
+    title: "Check Health",
+    description: "Monitor and react to player health.",
+    codeExample: "if (hero.health < 50) hero.usePotion();",
+    goals: ["Learn if-statements and character state."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: ["Use if-statements to check hero.health and trigger actions when health is low."],
+    unlocks: "",
     week: 1,
-    codeExample: "if (health < 50) {\n  useHealthPotion();\n}\n// You've learned to react to status!",
-    hints: [
-      "Keep an eye on your health bar at all times",
-      "Different enemies cause different status effects"
-    ]
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
   },
   {
     id: 7,
     lessonNumber: 7,
     title: "Simple Conditions",
-    description: "Learn basic if/then logic to make decisions.",
-    concept: "Conditional Logic",
-    objectives: [
-      "Use your first if statement",
-      "Make decisions based on game state",
-      "Handle multiple scenarios"
-    ],
-    difficulty: 2,
-    estimatedTime: 25,
-    mentor: {
-      name: "Sage the Wizard",
-      icon: "🧙‍♂️"
-    },
+    description: "Make decisions using logic.",
+    codeExample: "if (pathIsClear) hero.moveForward();",
+    goals: ["Apply decision-making to avoid danger."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: ["Use if-statements to help your hero avoid obstacles or danger in the code."],
+    unlocks: "",
     week: 1,
-    codeExample: "if (enemyNearby) {\n  retreat();\n} else {\n  moveForward();\n}\n// Now you're thinking!",
-    hints: [
-      "Conditions help your code make smart decisions",
-      "You can nest conditions inside each other"
-    ]
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
   },
   {
     id: 8,
     lessonNumber: 8,
-    title: "First Challenge",
-    description: "Put everything together in your first puzzle test.",
-    concept: "Integration",
+    title: "Puzzle Level: Move, Collect, Decide",
+    description: "Combine movement, logic, and collection.",
+    codeExample: "if (!enemyNearby) hero.collect();",
+    goals: ["Apply skills from Week 1 in one scenario."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: ["Combine movement, logic, and collection commands to solve the puzzle in code!"],
+    unlocks: "",
+    week: 1,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  // Week 2: Smart Moves & Simple Combat
+  {
+    id: 9,
+    lessonNumber: 9,
+    title: "Hazard Zones",
+    description: "Learn to avoid traps using logic.",
+    codeExample: "if (!tile.isHazard) hero.move();",
+    goals: ["Use conditionals to survive."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 2,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 10,
+    lessonNumber: 10,
+    title: "Meet Rex the Warrior",
+    description: "Unlock a new hero and learn about attack power.",
+    codeExample: "hero.attack(enemy);",
+    goals: ["Introduce hero class switching and RPG-style combat."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 2,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 11,
+    lessonNumber: 11,
+    title: "Basic Combat",
+    description: "Learn basic enemy engagement.",
+    codeExample: "if (hero.isNearEnemy()) hero.attack();",
+    goals: ["React to proximity and attack enemies."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 2,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 12,
+    lessonNumber: 12,
+    title: "While Loops",
+    description: "Repeat until a goal is met.",
+    codeExample: "while (!hero.atExit()) { hero.moveRight(); }",
+    goals: ["Learn while-loop structures."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 2,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 13,
+    lessonNumber: 13,
+    title: "Grab the Loot!",
+    description: "Collect multiple treasures using logic.",
+    codeExample: "for (let gem of gems) hero.collect(gem);",
+    goals: ["Loop over object lists."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 2,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 14,
+    lessonNumber: 14,
+    title: "Keys & Doors",
+    description: "Use keys to open gates and complete objectives.",
+    codeExample: "if (hero.hasKey()) hero.unlockDoor();",
+    goals: ["Introduce inventory logic."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 2,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 15,
+    lessonNumber: 15,
+    title: "Meet Arrow the Elf",
+    description: "Unlock a new mentor focused on logic and precision.",
+    codeExample: "hero.setStrategy(\"stealth\")",
+    goals: ["Add new decision-based playstyles."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 2,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 16,
+    lessonNumber: 16,
+    title: "Decision Paths",
+    description: "Navigate choices using if/else blocks.",
+    codeExample: "if (leftPathClear) hero.moveLeft(); else hero.moveRight();",
+    goals: ["Deepen logic tree understanding."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 2,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  // Week 3: Stronger Logic Foundations
+  {
+    id: 17,
+    lessonNumber: 17,
+    title: "Multi-Enemy Combat",
+    description: "Fight multiple enemies based on distance.",
+    codeExample: "enemy = hero.findNearestEnemy(); hero.attack(enemy);",
+    goals: ["Prioritize and handle multiple threats."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 3,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 18,
+    lessonNumber: 18,
+    title: "Track Health Points",
+    description: "Show health bar and health events.",
+    codeExample: "display(hero.health); if (hero.health < 20) hero.heal();",
+    goals: ["Visualize and manage HP."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 3,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 19,
+    lessonNumber: 19,
+    title: "Nested Ifs",
+    description: "Layer decisions inside each other.",
+    codeExample: "if (enemy) { if (hero.health > 50) attack(); }",
+    goals: ["Learn complex condition logic."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 3,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 20,
+    lessonNumber: 20,
+    title: "Create Functions",
+    description: "Package logic into reusable blocks.",
+    codeExample: "function moveRight3() { for (i = 0; i < 3; i++) hero.moveRight(); }",
+    goals: ["Abstract and reuse logic."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 3,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 21,
+    lessonNumber: 21,
+    title: "Functions with Inputs",
+    description: "Pass arguments into functions.",
+    codeExample: "function move(n) { for (i = 0; i < n; i++) hero.moveRight(); }",
+    goals: ["Add flexibility to logic blocks."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 3,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 22,
+    lessonNumber: 22,
+    title: "For Loops",
+    description: "Repeat with counters.",
+    codeExample: "for (let i = 0; i < 5; i++) move();",
+    goals: ["Distinguish from while-loop use cases."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 3,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 23,
+    lessonNumber: 23,
+    title: "Arrays",
+    description: "Store groups of items.",
+    codeExample: "let enemies = [e1, e2]; for (e of enemies) hero.attack(e);",
+    goals: ["Use and access list data."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 3,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 24,
+    lessonNumber: 24,
+    title: "Puzzle Level: Survival Gauntlet",
+    description: "Survive waves using functions and loops.",
+    codeExample: "while (!exitOpen) defendPosition();",
+    goals: ["Apply Week 3 logic under pressure."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 3,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  // Week 4: GD1 Begins - Game Logic Enters
+  {
+    id: 25,
+    lessonNumber: 25,
+    title: "Meet Luna the Valkyrie",
+    description: "Learn planning and stage-building.",
+    codeExample: "hero.buildTrap(x, y)",
+    goals: ["Strategic thinking and grid knowledge."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 4,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 26,
+    lessonNumber: 26,
+    title: "Coordinate Systems",
+    description: "Use X/Y coordinates for control.",
+    codeExample: "hero.moveTo(5, 2)",
+    goals: ["Understand 2D space logic."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 4,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 27,
+    lessonNumber: 27,
+    title: "Game Events",
+    description: "React to world changes.",
+    codeExample: "onPickup(\"gem\", () => score++);",
+    goals: ["Learn event-driven programming."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 4,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 28,
+    lessonNumber: 28,
+    title: "Debugging Basics",
+    description: "Print and troubleshoot errors.",
+    codeExample: "console.log(hero.position);",
+    goals: ["Learn to self-diagnose bugs."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 4,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 29,
+    lessonNumber: 29,
+    title: "Combat Challenge",
+    description: "Survive a fight under pressure.",
+    codeExample: "fightWave(enemies);",
+    goals: ["Combine all combat logic."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 4,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 30,
+    lessonNumber: 30,
+    title: "Build Your Arena",
+    description: "Player designs a stage.",
+    codeExample: "placeWalls(); spawnMonsters();",
+    goals: ["Showcase logic design and layout."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 4,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 31,
+    lessonNumber: 31,
+    title: "Object Properties",
+    description: "Use .type, .health, etc.",
+    codeExample: "if (enemy.health < 30) hero.attack();",
+    goals: ["Understand object attributes."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 4,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 32,
+    lessonNumber: 32,
+    title: "Puzzle Level: Guard the Crystals!",
+    description: "Defend key objects from waves.",
+    codeExample: "protect(crystals);",
+    goals: ["Link state to defense."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 4,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  // Week 5: Mastery Prep & Final Challenge
+  {
+    id: 33,
+    lessonNumber: 33,
+    title: "Spawning & Generators",
+    description: "Create repeat enemy spawns.",
+    codeExample: "spawn(enemy, interval);",
+    goals: ["Tie to infinite loop logic."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 5,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 34,
+    lessonNumber: 34,
+    title: "Timed Health Loss",
+    description: "Deplete health over time.",
+    codeExample: "setInterval(() => hero.health--, 1000);",
+    goals: ["Simulate Gauntlet health."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 5,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 35,
+    lessonNumber: 35,
+    title: "Level Timers",
+    description: "Add countdowns to complete stages.",
+    codeExample: "startTimer(60);",
+    goals: ["Teach timed logic."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 5,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 36,
+    lessonNumber: 36,
+    title: "Use Potions!",
+    description: "Activate buffs/items.",
+    codeExample: "if (hero.isLow()) hero.usePotion();",
+    goals: ["Link inventory and powerups."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 5,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 37,
+    lessonNumber: 37,
+    title: "Final Review",
+    description: "Recap all concepts interactively.",
+    codeExample: "Varies by review content",
+    goals: ["Cement knowledge and evaluate."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 5,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 38,
+    lessonNumber: 38,
+    title: "Custom Level Build",
+    description: "Student creates logic puzzle.",
+    codeExample: "design, spawn, script",
+    goals: ["Demonstrate mastery."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 5,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 39,
+    lessonNumber: 39,
+    title: "Boss Fight",
+    description: "Final level with everything learned.",
+    codeExample: "boss = new Boss(); fight(boss);",
+    goals: ["Combine loops, objects, conditions, functions."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 5,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+  {
+    id: 40,
+    lessonNumber: 40,
+    title: "CS1 Graduation: Gauntlet Unlocked",
+    description: "Celebrate with Gauntlet access.",
+    codeExample: "unlock(\"gauntletWorld\")",
+    goals: ["Reward learning and unlock next path."],
+    concept: "",
+    difficulty: 1,
+    estimatedTime: 10,
+    hints: [],
+    unlocks: "",
+    week: 5,
+    mentor: { name: "Sage the Wizard", icon: "🧙" },
+  },
+];
+
+// CS2 Lessons - Functions & Logic with Rex the Warrior
+export interface CS2Lesson extends CS1Lesson {}
+
+export const CS2_LESSONS: CS2Lesson[] = [
+  // Week 1: Advanced Functions
+  {
+    id: 41,
+    lessonNumber: 1,
+    title: "Welcome to CS2",
+    description: "Meet Rex the Warrior and begin your journey into more advanced programming concepts.",
+    concept: "Introduction",
     objectives: [
-      "Navigate a complex map",
-      "Collect all required items",
-      "Reach the exit within time limit"
+      "Meet your new mentor Rex",
+      "Understand CS2 course structure",
+      "Review CS1 concepts"
+    ],
+    difficulty: 2,
+    estimatedTime: 20,
+    mentor: {
+      name: "Rex the Warrior",
+      icon: "⚔️"
+    },
+    week: 1,
+    codeExample: "// Welcome to CS2: Functions & Logic!\n// Where we build more powerful code structures\nfunction greetRex() {\n  console.log(\"Ready for battle, coder?\");\n}\n\ngreetRex();",
+    hints: [
+      "CS2 builds directly on your CS1 knowledge",
+      "The challenges will be harder, but Rex will guide you"
+    ]
+  },
+  {
+    id: 42,
+    lessonNumber: 2,
+    title: "Return Values",
+    description: "Learn how functions can return values to be used elsewhere in your code.",
+    concept: "Function Returns",
+    objectives: [
+      "Create functions that return values",
+      "Store and use returned values",
+      "Chain function calls together"
     ],
     difficulty: 3,
     estimatedTime: 30,
     mentor: {
-      name: "Sage the Wizard",
-      icon: "🧙‍♂️"
+      name: "Rex the Warrior",
+      icon: "⚔️"
     },
     week: 1,
-    codeExample: "// This challenge requires all your skills!\nlet gems = 0;\nif (pathBlocked) {\n  findAlternatePath();\n}\nmoveToExit();",
+    codeExample: "function calculateDamage(strength, weaponPower) {\n  return strength * weaponPower;\n}\n\nlet damage = calculateDamage(5, 3); // returns 15\nconsole.log(`You deal ${damage} damage!`);",
     hints: [
-      "Plan your route before starting",
-      "Use what you've learned about variables and conditions"
-    ],
-    unlocks: "Week 2 Content"
+      "The return keyword sends a value back from the function",
+      "A function stops executing when it hits return"
+    ]
   },
   
-  // Additional lessons would continue here in the same format
-  // Week 2, Week 3, etc.
+  // More CS2 lessons would be added here...
 ];
 
-// Mentor data
+// CS3 Lessons - Objects & Complexity with Arrow the Elf
+export interface CS3Lesson extends CS1Lesson {}
+
+export const CS3_LESSONS: CS3Lesson[] = [
+  {
+    id: 81,
+    lessonNumber: 1,
+    title: "Welcome to CS3",
+    description: "Meet Arrow the Elf and begin learning about objects and more complex programming patterns.",
+    concept: "Introduction",
+    objectives: [
+      "Meet your new mentor Arrow",
+      "Understand CS3 course structure",
+      "Review CS1 and CS2 concepts"
+    ],
+    difficulty: 3,
+    estimatedTime: 25,
+    mentor: {
+      name: "Arrow the Elf",
+      icon: "🏹"
+    },
+    week: 1,
+    codeExample: "// Welcome to CS3: Objects & Complexity!\n// With Arrow the Elf, master of precision and structure\nclass Greeting {\n  constructor(name) {\n    this.name = name;\n  }\n  sayHello() {\n    console.log(`Greetings, ${this.name}! Arrow welcomes you.`);\n  }\n}\n\nconst greeting = new Greeting('adventurer');\ngreeting.sayHello();",
+    hints: [
+      "CS3 introduces object-oriented programming concepts",
+      "Think about how to model real-world things in code"
+    ]
+  },
+  
+  // More CS3 lessons would be added here...
+];
+
+// CS4 Lessons - Advanced Concepts with Luna the Valkyrie
+export interface CS4Lesson extends CS1Lesson {}
+
+export const CS4_LESSONS: CS4Lesson[] = [
+  {
+    id: 121,
+    lessonNumber: 1,
+    title: "Welcome to CS4",
+    description: "Meet Luna the Valkyrie and begin mastering advanced programming concepts.",
+    concept: "Introduction",
+    objectives: [
+      "Meet your new mentor Luna",
+      "Understand CS4 course structure",
+      "Review previous course concepts"
+    ],
+    difficulty: 4,
+    estimatedTime: 30,
+    mentor: {
+      name: "Luna the Valkyrie",
+      icon: "👑"
+    },
+    week: 1,
+    codeExample: "// Welcome to CS4: Advanced Concepts!\n// With Luna the Valkyrie, guardian of code mastery\nasync function startJourney() {\n  console.log(\"Your final journey begins...\");\n  await new Promise(resolve => setTimeout(resolve, 1000));\n  console.log(\"Luna will guide you to coding excellence!\");\n}\n\nstartJourney();",
+    hints: [
+      "CS4 covers the most advanced programming patterns",
+      "You'll learn concepts used by professional developers"
+    ]
+  },
+  
+  // More CS4 lessons would be added here...
+];
+
+// Mentor data for all courses
 export const MENTOR_DATA = {
   sage: {
     name: "Sage the Wizard",
     icon: "🧙‍♂️",
-    color: "blue",
-    specialty: "Fundamentals",
-    quote: "The path of code begins with a single function."
+    quote: "The journey of a thousand lines of code begins with a single function. Take your time to understand each concept, and you'll build wonders!"
   },
   rex: {
     name: "Rex the Warrior",
-    icon: "⚔️",
-    color: "red",
-    specialty: "Loops & Repetition",
-    quote: "Strength comes from doing the same thing perfectly, over and over."
+    icon: "🦖",
+    quote: "Functions are the building blocks of your code arsenal. Master them, and you can conquer any coding challenge with strength and precision!"
   },
   arrow: {
     name: "Arrow the Elf",
-    icon: "🏹",
-    color: "green",
-    specialty: "Logic & Decisions",
-    quote: "Choose your path wisely, for each branch leads to different outcomes."
+    icon: "🧝‍♂️",
+    quote: "In the world of programming, objects are like the trees of a forest - each with their own properties and behaviors, working together to create something complex and beautiful."
   },
   luna: {
     name: "Luna the Valkyrie",
-    icon: "👑",
-    color: "purple",
-    specialty: "Organization & Architecture",
-    quote: "True mastery is bringing order to chaos through structure."
+    icon: "⚔️",
+    quote: "A true coding master knows that power comes not just from writing code, but from writing code that others can understand, maintain, and build upon. We aim for elegance in our solutions."
   }
 };
 
 // Course structure overview
 export const COURSE_STRUCTURE = {
   cs1: {
-    id: "cs1",
     title: "Code Basics",
-    description: "Learn the fundamentals with Sage the Wizard",
-    mentor: MENTOR_DATA.sage,
-    weeks: 5,
-    totalLessons: 40,
-    mainConcepts: ["Variables", "Basic Movement", "Simple Commands", "Basic Logic"]
+    mentor: "Sage the Wizard",
+    mainConcepts: [
+      "Variables", 
+      "Conditions", 
+      "Loops", 
+      "Basic Logic", 
+      "Problem Solving"
+    ]
+  },
+  cs2: {
+    title: "Functions & Logic",
+    mentor: "Rex the Warrior",
+    mainConcepts: [
+      "Functions", 
+      "Parameters", 
+      "Return Values", 
+      "Scope", 
+      "Advanced Logic", 
+      "Modular Design"
+    ]
+  },
+  cs3: {
+    title: "Objects & Complexity",
+    mentor: "Arrow the Elf",
+    mainConcepts: [
+      "Objects", 
+      "Properties", 
+      "Methods", 
+      "Classes", 
+      "Inheritance", 
+      "Data Structures"
+    ]
+  },
+  cs4: {
+    title: "Advanced Concepts",
+    mentor: "Luna the Valkyrie",
+    mainConcepts: [
+      "Async Programming", 
+      "Code Organization", 
+      "Design Patterns", 
+      "Advanced Algorithms", 
+      "Performance", 
+      "Error Handling"
+    ]
   }
 }; 

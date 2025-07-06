@@ -9,7 +9,7 @@ interface CodeEditorProps {
   onReset: () => void;
   onShowHint: () => void;
   onShowSolution: () => void;
-  isRunning: boolean;
+  isRunning?: boolean;
   level: number;
   currentExecutingLine?: number;
   codeLines?: string[];
@@ -22,7 +22,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   onReset,
   onShowHint,
   onShowSolution,
-  isRunning,
+  isRunning = false,
   level,
   currentExecutingLine = -1,
   codeLines = []
