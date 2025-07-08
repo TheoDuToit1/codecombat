@@ -13,6 +13,7 @@ interface CodeEditorProps {
   level: number;
   currentExecutingLine?: number;
   codeLines?: string[];
+  placeholder?: string;
 }
 
 export const CodeEditor: React.FC<CodeEditorProps> = ({
@@ -25,7 +26,8 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   isRunning = false,
   level,
   currentExecutingLine = -1,
-  codeLines = []
+  codeLines = [],
+  placeholder = ''
 }) => {
   return (
     <div className="bg-gray-900 rounded-lg overflow-hidden shadow-2xl">
@@ -91,6 +93,13 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
 
       {/* Editor */}
       <div className="h-80">
+        {!code && placeholder && (
+          <div className="absolute z-10 text-gray-500 p-4 font-mono text-sm">
+            {placeholder.split('\n').map((line, idx) => (
+              <div key={idx}>{line || ' '}</div>
+            ))}
+          </div>
+        )}
         <Editor
           height="100%"
           defaultLanguage="javascript"
@@ -106,7 +115,14 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
             automaticLayout: true,
             tabSize: 2,
             wordWrap: 'on',
-            readOnly: isRunning
+            readOnly: isRunning,
+            quickSuggestions: false,
+            suggestOnTriggerCharacters: false,
+            parameterHints: { enabled: false },
+            suggest: { showClasses: false, showFunctions: false, showVariables: false, showWords: false },
+            hover: { enabled: false },
+            formatOnType: false,
+            formatOnPaste: false
           }}
         />
       </div>

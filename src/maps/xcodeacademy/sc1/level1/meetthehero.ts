@@ -7,7 +7,8 @@ const meetTheHero: LevelConfig = {
   difficulty: 'easy',
   width: 24,
   height: 16,
-  playerStart: { x: 18, y: 7 },
+  playerStart: { x: 6, y: 14 },
+  successTarget: { x: 6, y: 10 },
   tiles: [
     // Row 0 (top border)
     Array(24).fill('wall'),
@@ -29,6 +30,11 @@ const meetTheHero: LevelConfig = {
     count: 0,
     positions: [],
     types: []
+  },
+  successCriteria: {
+    type: 'position',
+    position: { x: 6, y: 10 },
+    message: "🎉 Success! You've reached the fountain!"
   }
 };
 

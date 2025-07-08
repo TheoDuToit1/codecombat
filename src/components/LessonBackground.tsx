@@ -43,6 +43,32 @@ export const LessonBackground: React.FC<LessonBackgroundProps> = ({ lessonNumber
       />
     );
   }
+  
+  // For lessons 5 and 6, use the im-3.jpg image
+  if (lessonNumber === 5 || lessonNumber === 6) {
+    return (
+      <div 
+        style={{
+          ...backgroundStyles,
+          backgroundImage: `url(/images/im-3.jpg)`,
+          filter: 'brightness(0.92) saturate(1.1)',
+        }}
+      />
+    );
+  }
+  
+  // For lessons 7 and 8, use the im4.jpg image
+  if (lessonNumber === 7 || lessonNumber === 8) {
+    return (
+      <div 
+        style={{
+          ...backgroundStyles,
+          backgroundImage: `url(/images/im4.jpg)`,
+          filter: 'brightness(0.92) saturate(1.1)',
+        }}
+      />
+    );
+  }
 
   // For other lessons, use a gradient background
   return (

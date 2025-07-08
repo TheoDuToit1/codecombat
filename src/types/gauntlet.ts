@@ -8,6 +8,26 @@ export type TileType =
   | 'fire'
   | 'enemy';
 
+// Define success criteria types
+export type SuccessCriteriaType = 
+  | 'position' 
+  | 'allDirections' 
+  | 'multiStep' 
+  | 'waypoints' 
+  | 'variable' 
+  | 'healthCheck' 
+  | 'condition' 
+  | 'combined';
+
+// Define success criteria interface
+export interface SuccessCriteria {
+  type: SuccessCriteriaType;
+  position?: { x: number; y: number };
+  waypoints?: { x: number; y: number }[];
+  commandCount?: number;
+  message: string;
+}
+
 export interface LevelConfig {
   id: string;
   name: string;
@@ -30,6 +50,12 @@ export interface LevelConfig {
     positions: { x: number; y: number }[];
     types: string[];
   };
+  // Add new properties for Lesson Start/End system
+  successTarget?: { x: number; y: number };
+  successCriteria?: SuccessCriteria;
+  // New properties for enhanced level features
+  placeholderCode?: string;
+  waypointMarkers?: { x: number; y: number; label: string }[];
 }
 
 export interface GauntletState {

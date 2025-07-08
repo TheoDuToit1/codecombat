@@ -17,7 +17,7 @@ const TILE_EMOJIS: Record<string, string> = {
   wall_rb: '🏛️', // Bottom-right corner wall
   empty: '', // Make empty tiles truly empty
   player: '🧙', // Explorer character
-  gem: '📜', // Ancient knowledge scrolls
+  gem: '💎', // Diamond gem
   food: '🧪', // Ancient magical potions
   key: '🗝️', // Ancient ornate key
   exit: '🏛️', // Temple exit
@@ -222,6 +222,9 @@ export const GameGrid: React.FC<GameGridProps> = ({
         // Get assets from each gauntlet section (1-4)
         const sections = [1, 2, 3, 4];
         const imageMap: Record<string, string> = {};
+        
+        // Add custom images for specific tiles
+        imageMap['gem'] = '/images/diamond.png';
         
         for (const section of sections) {
           const objects = await fetchGauntletObjects(section);

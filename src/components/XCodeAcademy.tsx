@@ -20,6 +20,15 @@ import { GameStats } from './GameStats';
 import { loadCharacterAnimations } from '../utils/loadCharacterAnimations';
 import { AnimatedCharacter } from './AnimatedCharacter';
 import { LessonBackground } from './LessonBackground';
+// Import our new lesson controller
+import { 
+  onLessonStart, 
+  onLessonSuccess, 
+  checkLessonSuccess, 
+  createSuccessConfetti 
+} from '../utils/lessonController';
+// Import our lesson animations CSS
+import '../styles/lessonAnimations.css';
 
 // CSS for the glowing animation
 const glowingGreenButtonStyle = {
@@ -246,27 +255,61 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
   // Add this near the top of the component
   const mageSprites = loadCharacterAnimations('mage');
   
+  // Add state to track moveUp executions for lesson 1
+  const [lesson1MoveUpCount, setLesson1MoveUpCount] = useState(0);
+  
+  // Add state to track if the book has been collected
+  const [bookCollected, setBookCollected] = useState(false);
+  // Add state to track if the potion has been collected
+  const [potionCollected, setPotionCollected] = useState(false);
+  
+  // Reset moveUp counter when code or lesson changes
+  useEffect(() => {
+    // Reset the counter when code changes or lesson changes
+    setLesson1MoveUpCount(0);
+  }, [code, activeLessonId]);
+  
   // Effect to check if we're in lesson mode from URL params
   useEffect(() => {
     if (lessonId) {
       const lessonIdNum = parseInt(lessonId, 10);
-      setActiveLessonId(lessonIdNum);
+      setSelectedLesson(lessonIdNum);
       setIsLessonActive(true);
+      setActiveLessonId(lessonIdNum);
       
-      // Find the lesson data
-      const lessonData = CS1_LESSONS.find(l => l.id === lessonIdNum);
-      if (lessonData && lessonData.codeExample) {
-        setCode(lessonData.codeExample);
-      }
-      
-      // Set initial character position based on lesson
-      if (lessonIdNum === 1) {
-        setCharacterPosition({ x: 6, y: 14 });
-      } else if (lessonIdNum === 2) {
-        setCharacterPosition({ x: 6, y: 10 });
-      } else if (lessonIdNum === 4) {
-        setCharacterPosition({ x: 11, y: 11 }); // Updated starting position for lesson 4
-      }
+      // Use our standardized lesson start handler
+      const lessonData = CS1_LESSONS.find(l => l.id === lessonIdNum) || CS1_LESSONS[0];
+      onLessonStart({
+        lessonId: lessonIdNum,
+        lessonData,
+        onStateChange: (newState) => {
+          // Apply state changes from the controller
+          if (newState.characterPosition) {
+            setCharacterPosition(newState.characterPosition);
+          }
+          if (newState.characterDirection) {
+            setCharacterDirection(newState.characterDirection);
+          }
+          if (newState.characterState) {
+            setCharacterState(newState.characterState);
+          }
+          if (newState.executionLogs) {
+            setExecutionLogs(newState.executionLogs);
+          }
+          if (newState.code !== undefined) {
+            setCode(newState.code);
+          }
+          if (newState.codePlaceholder !== undefined) {
+            setCodePlaceholder(newState.codePlaceholder);
+          }
+          if (newState.isSuccess !== undefined) {
+            setIsSuccess(newState.isSuccess);
+          }
+          if (newState.isRunning !== undefined) {
+            setIsRunning(newState.isRunning);
+          }
+        }
+      });
     }
   }, [lessonId]);
 
@@ -405,6 +448,18 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
         // Store final position for logging
         const finalPos = { x: newX, y: newY };
         
+        // Check specifically for lesson 4 success at position (12,5)
+        if (activeLessonId === 4 && newX === 12 && newY === 5) {
+          setTimeout(() => {
+            setIsSuccess(true);
+            setExecutionLogs(logs => [
+              ...logs,
+              "🎉 Success! You've completed the waypoint challenge!"
+            ]);
+            createSuccessConfetti();
+          }, 500);
+        }
+        
         // If this is the last step, log the final position
         if (stepsRemaining === 1) {
           setTimeout(() => {
@@ -447,7 +502,7 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
     }
     setIsRunning(true);
     setExecutionLogs([]);
-    // Local tracking for lesson 2 directions
+    // Local tracking for lesson directions
     let directionsUsedThisRun = { up: false, down: false, left: false, right: false };
     if (activeLessonId === 2) {
       setDirectionsExecuted({ up: false, down: false, left: false, right: false });
@@ -461,37 +516,67 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
       const executeNextCommand = () => {
         if (currentLineIndex >= lines.length) {
           setIsRunning(false);
-          // For lesson 2, check for success after running code
-          if (activeLessonId === 2) {
-            if (directionsUsedThisRun.up && directionsUsedThisRun.down && directionsUsedThisRun.left && directionsUsedThisRun.right) {
-              setIsSuccess(true);
-              createConfetti();
-              setExecutionLogs(["🎉 Success! You've used all four directions and completed the objective!"]);
+          
+          // Check for lesson success using our standardized controller
+          if (activeLessonId) {
+            checkLessonSuccess(
+              activeLessonId,
+              {
+                code,
+                characterPosition,
+                directionsUsed: directionsUsedThisRun
+              }
+            ).then(result => {
+              if (result.success) {
+                // Use our standardized success handler
+                onLessonSuccess({
+                  lessonId: activeLessonId,
+                  successMessage: result.message,
+                  onStateChange: (stateOrFn) => {
+                    if (typeof stateOrFn === 'function') {
+                      const newState = stateOrFn({
+                        executionLogs: executionLogs,
+                        isSuccess: false,
+                        isRunning: true
+                      });
+                      
+                      if (newState.executionLogs) {
+                        setExecutionLogs(newState.executionLogs);
+                      }
+                      if (newState.isSuccess !== undefined) {
+                        setIsSuccess(newState.isSuccess);
+                      }
+                      if (newState.isRunning !== undefined) {
+                        setIsRunning(newState.isRunning);
+                      }
             } else {
-              setIsSuccess(false);
-              setExecutionLogs(["Try using all four directions: up, down, left, right!"]);
+                      if (stateOrFn.executionLogs) {
+                        setExecutionLogs(stateOrFn.executionLogs);
+                      }
+                      if (stateOrFn.isSuccess !== undefined) {
+                        setIsSuccess(stateOrFn.isSuccess);
             }
-          } else if (
-            activeLessonId === 3 &&
-            lines.some(line => /hero\.move(Up|Down|Left|Right)\s*\(\s*\d+\s*\)/.test(line))
-          ) {
+                      if (stateOrFn.isRunning !== undefined) {
+                        setIsRunning(stateOrFn.isRunning);
+                      }
+                    }
+                  },
+                  onComplete: handleCompleteLesson
+                });
+                
+                // Force the success state to be true
             setIsSuccess(true);
-            createConfetti();
-            setExecutionLogs(["🎉 Success! You used a number in the brackets to move multiple steps!"]);
-          } else if (
-            activeLessonId === 1 &&
-            characterPosition.x === 6 &&
-            characterPosition.y === 10
-          ) {
-            setIsSuccess(true);
-            createConfetti();
-            setExecutionLogs(["🎉 Success! You've completed the objective!"]);
-          } else if (
-            activeLessonId === 4
-          ) {
-            setIsSuccess(true);
-            createConfetti();
-            setExecutionLogs(["🎉 Success! (Forced for demonstration)"]);
+                
+                // Create confetti using our standardized function
+                createSuccessConfetti();
+              } else {
+                // Not successful yet
+                setExecutionLogs(["Keep trying! You're on the right track."]);
+              }
+            }).catch(error => {
+              console.error("Error checking lesson success:", error);
+              setExecutionLogs(["An error occurred. Please try again."]);
+            });
           } else {
             setExecutionLogs(["Great job! Code executed successfully!"]);
           }
@@ -506,6 +591,24 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
           moveUp: (steps = 1) => {
             if (activeLessonId === 2) directionsUsedThisRun.up = true;
             if (activeLessonId === 2) setDirectionsExecuted(prev => ({ ...prev, up: true }));
+            
+            // Special handling for lesson 1 to ensure success
+            if (activeLessonId === 1) {
+              // Increment the moveUp counter
+              const newCount = lesson1MoveUpCount + 1;
+              setLesson1MoveUpCount(newCount);
+              
+              // Check if we've reached the required number of moveUp calls
+              if (newCount >= 4) {
+                // Force success for lesson 1
+                setTimeout(() => {
+                  setIsSuccess(true);
+                  setExecutionLogs(prev => [...prev, "🎉 Success! You've completed Lesson 1!"]);
+                  createSuccessConfetti();
+                }, steps * 700 + 500);
+              }
+            }
+            
             setIsMoving(true);
             moveCharacter('up', steps);
             setTimeout(() => {
@@ -546,6 +649,20 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
               currentLineIndex++;
               executeNextCommand();
             }, steps * 700);
+          },
+          // Add health property and usePotion method for lesson 6
+          health: 50,
+          usePotion: () => {
+            setExecutionLogs(prev => [...prev, "🧪 Used a health potion! +25 health"]);
+            hero.health += 25;
+            currentLineIndex++;
+            executeNextCommand();
+          },
+          // Add collect method for lesson 8
+          collect: () => {
+            setExecutionLogs(prev => [...prev, "💎 Collected an item!"]);
+            currentLineIndex++;
+            executeNextCommand();
           }
         };
         try {
@@ -582,6 +699,8 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
     setIsRunning(false);
     setCodeError(null);
     setIsSuccess(false);
+    setBookCollected(false);
+    setPotionCollected(false);
     // Set position based on active lesson
     if (activeLessonId === 1) {
       setCharacterPosition({ x: 6, y: 14 });
@@ -589,6 +708,14 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
       setCharacterPosition({ x: 6, y: 10 });
     } else if (activeLessonId === 4) {
       setCharacterPosition({ x: 11, y: 11 }); // Updated starting position for lesson 4
+    } else if (activeLessonId === 5) {
+      setCharacterPosition({ x: 7, y: 3 }); // Starting position for lesson 5
+    } else if (activeLessonId === 6) {
+      setCharacterPosition({ x: 2, y: 3 }); // Starting position for lesson 6 (diamond adventure)
+    } else if (activeLessonId === 7) {
+      setCharacterPosition({ x: 5, y: 1 }); // Starting position for lesson 7 (diamond and key)
+    } else if (activeLessonId === 8) {
+      setCharacterPosition({ x: 5, y: 5 }); // Starting position for lesson 8 (treasure hunt)
     } else {
       setCharacterPosition({ x: 1, y: 5 });
     }
@@ -609,9 +736,21 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
     if (activeLessonId === 4) {
       setCode('hero.moveDown(3)\nhero.moveLeft(3)\nhero.moveUp(9)\nhero.moveRight(4)');
       setExecutionLogs(prev => [...prev, '🔍 Solution: Use the exact sequence to visit all waypoints in order.']);
+    } else if (activeLessonId === 5) {
+      setCode('hero.moveDown(10)\nhero.moveUp(10)');
+      setExecutionLogs(prev => [...prev, '🔍 Solution: Move down to collect the book, then return to the start.']);
+    } else if (activeLessonId === 6) {
+      setCode('hero.moveRight(8)');
+      setExecutionLogs(prev => [...prev, '🔍 Solution: Move right to collect the diamond.']);
+    } else if (activeLessonId === 7) {
+      setCode('hero.moveDown(12)\nhero.moveLeft(3)\nhero.moveRight(9)');
+      setExecutionLogs(prev => [...prev, '🔍 Solution: First go down and left to get the blue gem, then right to get the red gem.']);
+    } else if (activeLessonId === 8) {
+      setCode('hero.moveUp(3)\nhero.moveDown(3)\nhero.moveRight(3)\nhero.moveLeft(6)\nhero.moveDown(3)');
+      setExecutionLogs(prev => [...prev, '🔍 Solution: Get all three treasures by visiting each location in order.']);
     } else {
-    setCode('hero.moveRight()');
-    setExecutionLogs(prev => [...prev, '🔍 Solution: Use hero.moveRight() to move your character to the right.']);
+      setCode('hero.moveRight()');
+      setExecutionLogs(prev => [...prev, '🔍 Solution: Use hero.moveRight() to move your character to the right.']);
     }
   };
 
@@ -625,34 +764,8 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
     navigate('/fundamentals-slides');
   };
 
-  // Function to create confetti
-  const createConfetti = () => {
-    // Clear any existing confetti
-    const existingConfetti = document.querySelectorAll('.confetti');
-    existingConfetti.forEach(element => element.remove());
-    
-    // Create new confetti pieces
-    const colors = ['#ff5252', '#ffeb3b', '#2196f3', '#4caf50', '#e040fb', '#ff9800'];
-    const confettiCount = 100;
-    
-    for (let i = 0; i < confettiCount; i++) {
-      const confetti = document.createElement('div');
-      confetti.className = 'confetti';
-      confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-      confetti.style.left = `${Math.random() * 100}%`;
-      confetti.style.width = `${Math.random() * 10 + 5}px`;
-      confetti.style.height = `${Math.random() * 10 + 5}px`;
-      confetti.style.animationDuration = `${Math.random() * 3 + 2}s`;
-      confetti.style.animationDelay = `${Math.random() * 0.5}s`;
-      
-      document.body.appendChild(confetti);
-      
-      // Remove confetti after animation completes
-      setTimeout(() => {
-        confetti.remove();
-      }, 5000);
-    }
-  };
+  // Replace the createConfetti function with our standardized one
+  const createConfetti = createSuccessConfetti;
 
   // Handle navigation to the next lesson
   const handleNextLesson = () => {
@@ -678,6 +791,28 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
       /hero\.moveRight\s*\(/i.test(codeToCheck)
     );
   };
+
+  // In the code that handles character movement, add:
+  useEffect(() => {
+    if (activeLessonId === 5 && characterPosition.x === 7 && characterPosition.y === 12 && !bookCollected) {
+      setBookCollected(true);
+    }
+  }, [activeLessonId, characterPosition, bookCollected]);
+
+  // Effect to check if the potion has been collected in lesson 6
+  useEffect(() => {
+    if (activeLessonId === 6 && characterPosition.x === 10 && characterPosition.y === 8 && !potionCollected) {
+      setPotionCollected(true);
+      setExecutionLogs(prev => [...prev, "🧪 Collected the healing potion!"]);
+      
+      // Show success message and trigger confetti
+      setTimeout(() => {
+        setIsSuccess(true);
+        setExecutionLogs(prev => [...prev, "🎉 Success! You've collected the healing potion!"]);
+        createSuccessConfetti();
+      }, 500);
+    }
+  }, [activeLessonId, characterPosition, potionCollected]);
 
   // Return the interactive lesson view if in lesson mode
   if (isLessonActive && activeLessonId) {
@@ -756,6 +891,52 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                             { x: 12, y: 5 },
                           ];
                           const isLesson4Waypoint = activeLessonId === 4 && lesson4Waypoints.some(pt => pt.x === x && pt.y === y);
+                          // Show book image at (7,13) for lesson 5
+                          if (activeLessonId === 5 && x === 7 && y === 13 && !bookCollected) {
+                            return (
+                              <div
+                                key={`cell-${x}-${y}`}
+                                style={{
+                                  width: '6.66%',
+                                  height: '100%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  position: 'relative',
+                                  background: 'transparent',
+                                }}
+                              >
+                                <img
+                                  src="/images/book.png"
+                                  alt="Book"
+                                  style={{ width: '80%', height: '80%', objectFit: 'contain', pointerEvents: 'none' }}
+                                />
+                              </div>
+                            );
+                          }
+                          // Show diamond image at (10,8) for lesson 6
+                          if (activeLessonId === 6 && x === 10 && y === 8) {
+                            return (
+                              <div
+                                key={`cell-${x}-${y}`}
+                                style={{
+                                  width: '6.66%',
+                                  height: '100%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  position: 'relative',
+                                  background: 'transparent',
+                                }}
+                              >
+                                <img
+                                  src="/images/potion.png"
+                                  alt="Potion"
+                                  style={{ width: '80%', height: '80%', objectFit: 'contain', pointerEvents: 'none' }}
+                                />
+                              </div>
+                            );
+                          }
                           return (
                             <div
                               key={`cell-${x}-${y}`}
@@ -847,32 +1028,24 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
 
                 {/* Success message */}
                 {isSuccess && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    zIndex: 2000,
-                    background: 'rgba(34,197,94,0.95)',
-                    color: 'white',
-                    fontSize: '3rem',
-                    fontWeight: 'bold',
-                    padding: '32px 64px',
-                    borderRadius: '24px',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
-                    textAlign: 'center',
-                    pointerEvents: 'none',
-                  }}>
-                    SUCCESS!
+                  <div className="success-message">
+                    <div>🎉 Success!</div>
+                    <div className="text-base mt-2">Lesson {activeLessonId} Complete</div>
+                    <button
+                      onClick={handleNextLesson}
+                      className="next-lesson-button mt-4 px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg text-lg font-medium"
+                    >
+                      Next Lesson →
+                    </button>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Right panel - Code editor and execution log */}
-            <div className="w-full md:w-1/3 p-4 flex flex-col space-y-4 h-full">
-              {/* Goals section */}
-              <div className="bg-gray-800 rounded-md border border-gray-700 p-3">
+            <div className="w-full md:w-1/3 p-4 flex flex-col h-full">
+              {/* Level goals section - small and concise */}
+              <div className="bg-gray-800 rounded-lg p-3 mb-4">
                 <h3 className="text-sm font-medium text-white mb-2 flex items-center">
                   <span className="mr-2">🎯</span> Level Goals
                 </h3>
@@ -889,70 +1062,27 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                 </ul>
               </div>
 
-              {/* Code editor - Make it properly editable and smaller */}
-              <div className="flex-1 flex flex-col" style={{ maxHeight: '40%' }}>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                    <span className="text-sm text-gray-300">Level {lessonData.lessonNumber} - Code Editor</span>
-                  </div>
-              </div>
-
-                <div className="border border-gray-700 rounded-md overflow-hidden flex-1 bg-gray-900 relative">
-                  <textarea
-                    value={code}
-                    onChange={(e) => setCode(e.target.value)}
-                    className="w-full h-full bg-gray-900 text-white p-4 font-mono text-base focus:outline-none resize-none"
-                    placeholder={codePlaceholder || "Type your code here..."}
-                    spellCheck="false"
+              {/* Code editor section - larger height */}
+              <div className="flex-1 mb-4" style={{ height: '70%', minHeight: '400px' }}>
+                <CodeEditor
+                  code={code}
+                  onChange={setCode}
+                  onRun={() => executeCode(code)}
+                  onReset={resetGame}
+                  onShowHint={showHint}
+                  onShowSolution={showSolution}
+                  isRunning={isRunning}
+                  level={activeLessonId || 1}
+                  currentExecutingLine={currentExecutingLine}
+                  codeLines={codeLines}
+                  placeholder={codePlaceholder}
                   />
                 </div>
                 
-                <div className="flex flex-col items-center space-y-2 mt-3">
-                  {codeError && (
-                    <div className="w-full flashing-orange-gradient">
-                      {codeError}
-                    </div>
-                  )}
-                  <div className="flex items-center space-x-2 w-full">
-                    <button
-                      onClick={() => executeCode(code)}
-                      disabled={isRunning || isSuccess}
-                      className={`px-4 py-2 rounded-md text-sm font-medium ${
-                        isRunning || isSuccess
-                          ? 'bg-gray-500 text-gray-300 cursor-not-allowed' 
-                          : 'bg-green-600 hover:bg-green-700 text-white'
-                      }`}
-                    >
-                      {isRunning ? 'Running...' : 'Run Code'}
-                    </button>
-                    <button
-                      onClick={resetGame}
-                      className="px-4 py-2 rounded-md text-sm font-medium bg-gray-600 hover:bg-gray-700 text-white"
-                    >
-                      Reset
-                    </button>
-                    {isSuccess && (
-                      <button
-                        onClick={handleNextLesson}
-                        className="px-4 py-2 rounded-md text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white flex items-center"
-                      >
-                        Next Lesson
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Execution log */}
-              <div className="flex-1">
-                <div className="bg-gray-900 border border-gray-700 rounded-md p-3 h-full overflow-auto">
+              {/* Execution log section - smaller height */}
+              <div className="bg-gray-800 rounded-lg p-3" style={{ maxHeight: '150px' }}>
                   <h3 className="text-sm font-medium text-white mb-2">Execution Log</h3>
+                <div className="overflow-y-auto" style={{ maxHeight: '120px' }}>
                   {executionLogs.length === 0 ? (
                     <p className="text-gray-400 text-sm">Run your code to see execution logs</p>
                   ) : (
@@ -968,6 +1098,21 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                   )}
                 </div>
               </div>
+              
+              {/* Next lesson button when success */}
+              {isSuccess && (
+                <div className="mt-4">
+                  <button
+                    onClick={handleNextLesson}
+                    className="w-full px-4 py-3 rounded-lg text-md font-medium bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center next-lesson-button"
+                  >
+                    Next Lesson
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

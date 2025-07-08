@@ -45,6 +45,11 @@ const directions: LevelConfig = {
     count: 0,
     positions: [],
     types: []
+  },
+  // Add lesson-specific success criteria for using all four directions
+  successCriteria: {
+    type: 'allDirections',
+    message: "🎉 Success! You've used all four directions and completed the objective!"
   }
 };
 

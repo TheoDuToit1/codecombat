@@ -132,35 +132,34 @@ export const LESSON_PLAN: Lesson[] = [
     hints: ['Variables store information', 'Use descriptive names', 'Variables can change']
   },
   {
-    id: 6, courseId: 'cs1', lessonNumber: 6, name: 'Health and Status', concept: 'Properties',
+    id: 6, courseId: 'cs1', lessonNumber: 6, name: 'Collect the Diamond', concept: 'Movement',
+    difficulty: 1, mentor: 'Sage', estimatedTime: 10,
+    description: 'Move your hero right to collect a diamond!',
+    objectives: ['Use hero.moveRight() command', 'Learn how to move multiple steps', 'Collect your first treasure'],
+    newConcepts: ['hero.moveRight()', 'Multi-step movement'],
+    practiceSkills: ['Direction control', 'Planning steps', 'Distance estimation'],
+    codeExample: '',
+    hints: ['Use hero.moveRight() with a number to move multiple steps', 'Count how many steps to reach the diamond', 'The diamond is 8 steps to the right']
+  },
+  {
+    id: 7, courseId: 'cs1', lessonNumber: 7, name: 'Treasure Adventure: Diamond and Key', concept: 'Multi-Direction',
+    difficulty: 1, mentor: 'Sage', estimatedTime: 15,
+    description: 'Move your hero in two directions to collect both a diamond and a key!',
+    objectives: ['Use hero.moveUp() and hero.moveDown()', 'Collect two different treasures', 'Plan a multi-step path'],
+    newConcepts: ['hero.moveUp()', 'hero.moveDown()', 'Multi-direction movement'],
+    practiceSkills: ['Vertical movement', 'Path planning', 'Sequential actions'],
+    codeExample: 'hero.moveUp(3);\nhero.moveDown(5);',
+    hints: ['First go up to get the diamond', 'Then go down past your starting point to find the key', 'Use two movement commands with the right numbers']
+  },
+  {
+    id: 8, courseId: 'cs1', lessonNumber: 8, name: 'Treasure Adventure: The Great Hunt', concept: 'Complex Movement',
     difficulty: 2, mentor: 'Sage', estimatedTime: 20,
-    description: 'Check your hero\'s health and status!',
-    objectives: ['Read hero.health', 'Understand hero properties', 'Make decisions based on status'],
-    newConcepts: ['hero.health', 'hero.gems', 'Property access'],
-    practiceSkills: ['Status checking', 'Information gathering', 'Decision making'],
-    codeExample: 'if (hero.health > 50) {\n  hero.moveRight();\n}',
-    hints: ['Properties tell you information', 'Health shows current HP', 'Use properties to make smart decisions']
-  },
-  {
-    id: 7, courseId: 'cs1', lessonNumber: 7, name: 'Simple Conditions', concept: 'If Statements',
-    difficulty: 2, mentor: 'Sage', estimatedTime: 25,
-    description: 'Make your first decisions in code!',
-    objectives: ['Use if statements', 'Make conditional moves', 'Understand true/false'],
-    newConcepts: ['if (condition)', 'Boolean logic', 'Conditional execution'],
-    practiceSkills: ['Logical thinking', 'Decision making', 'Conditional logic'],
-    codeExample: 'if (hero.gems < 5) {\n  hero.moveRight(); // Go get more gems\n}',
-    hints: ['If statements check conditions', 'Code inside {} runs when true', 'Think about when to do something']
-  },
-  {
-    id: 8, courseId: 'cs1', lessonNumber: 8, name: 'First Challenge', concept: 'Review',
-    difficulty: 3, mentor: 'Sage', estimatedTime: 30,
-    description: 'Combine everything you\'ve learned!',
-    objectives: ['Use multiple concepts together', 'Solve a complex puzzle', 'Plan a complete solution'],
-    newConcepts: ['Problem decomposition', 'Multi-step solutions'],
-    practiceSkills: ['Integration', 'Problem solving', 'Code planning'],
-    codeExample: 'var gems = hero.gems;\nif (gems < 3) {\n  hero.moveRight(2);\n}',
-    hints: ['Break big problems into small steps', 'Use all your tools', 'Test your solution step by step'],
-    unlocks: 'Rex the Warrior preview'
+    description: 'Become a master treasure hunter by collecting three treasures in different locations!',
+    objectives: ['Use all four direction commands', 'Collect three different treasures', 'Create a complex movement plan'],
+    newConcepts: ['hero.moveLeft()', 'Complete movement control', 'Complex path planning'],
+    practiceSkills: ['Four-direction movement', 'Complex path execution', 'Sequential planning'],
+    codeExample: 'hero.moveUp(3);\nhero.moveDown(3);\nhero.moveRight(3);\nhero.moveLeft(6);\nhero.moveDown(3);',
+    hints: ['Plan your complete path before writing code', 'You need to use all four directions', 'Remember to return to your starting point between treasures']
   },
 
   // Week 2: Building Skills (Lessons 9-16)
