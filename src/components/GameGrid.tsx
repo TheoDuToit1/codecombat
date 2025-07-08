@@ -225,6 +225,9 @@ export const GameGrid: React.FC<GameGridProps> = ({
         
         // Add custom images for specific tiles
         imageMap['gem'] = '/images/diamond.png';
+        imageMap['gem-blue'] = '/images/gem-blue.png';
+        imageMap['gem-red'] = '/images/gem-red.png';
+        console.log('Tile image map loaded:', imageMap);
         
         for (const section of sections) {
           const objects = await fetchGauntletObjects(section);
@@ -940,6 +943,9 @@ export const GameGrid: React.FC<GameGridProps> = ({
                 const worldY = rowIndex + offsetY;
                 const worldX = colIndex + offsetX;
                 const imageUrl = tileImages[tile] || null;
+                if (tile === 'gem-blue' || tile === 'gem-red') {
+                  console.log(`Rendering tile at (${worldX}, ${worldY}):`, tile, 'URL:', imageUrl);
+                }
                 const isWall = tile === 'wall' || tile.startsWith('wall_');
                 let wallColor = '#222';
                 let wallBorder = 'none';

@@ -8,7 +8,6 @@ import GauntletSelectionScreen from './components/GauntletSelectionScreen';
 import { CharacterCreator } from './components/CharacterCreator';
 import { AudioManager } from './components/AudioManager';
 import XCodeAcademy from './components/XCodeAcademy';
-import CharacterDemo from './components/CharacterDemo';
 import { FundamentalsSlidesPage } from './pages/FundamentalsSlidesPage';
 
 // Import the old components to maintain compatibility
@@ -58,7 +57,6 @@ const App: React.FC = () => {
       <Route path="/map-editor" element={<MapEditorPage />} />
       <Route path="/character-selector" element={WithBackToMain(CharacterSelect, { onSelect: () => {} })({})} />
       <Route path="/character-creator" element={WithBackToMain(CharacterCreator, { onCharacterCreated: () => {} })({})} />
-      <Route path="/character-demo" element={WithBackToMain(CharacterDemo)({})} />
       <Route path="/gauntlet-mode" element={WithBackToMain(GauntletSelectionScreen)({})} />
       <Route path="/gauntlet-level/:levelNumber" element={<GauntletContainer onBack={() => navigate('/gauntlet-mode')} />} />
       <Route path="/audio-manager" element={WithBackToMain(AudioManager)({})} />

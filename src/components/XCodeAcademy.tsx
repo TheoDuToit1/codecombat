@@ -263,6 +263,15 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
   // Add state to track if the potion has been collected
   const [potionCollected, setPotionCollected] = useState(false);
   
+  // Add state for gem collection in lesson 7
+  const [blueGemCollected, setBlueGemCollected] = useState(false);
+  const [redGemCollected, setRedGemCollected] = useState(false);
+  
+  // Add state for three gems in lesson 8
+  const [blueGem8Collected, setBlueGem8Collected] = useState(false);
+  const [redGem8Collected, setRedGem8Collected] = useState(false);
+  const [greenGem8Collected, setGreenGem8Collected] = useState(false);
+  
   // Reset moveUp counter when code or lesson changes
   useEffect(() => {
     // Reset the counter when code changes or lesson changes
@@ -711,16 +720,21 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
     } else if (activeLessonId === 5) {
       setCharacterPosition({ x: 7, y: 3 }); // Starting position for lesson 5
     } else if (activeLessonId === 6) {
-      setCharacterPosition({ x: 2, y: 3 }); // Starting position for lesson 6 (diamond adventure)
+      setCharacterPosition({ x: 2, y: 8 }); // Starting position for lesson 6 (diamond adventure)
     } else if (activeLessonId === 7) {
       setCharacterPosition({ x: 5, y: 1 }); // Starting position for lesson 7 (diamond and key)
     } else if (activeLessonId === 8) {
-      setCharacterPosition({ x: 5, y: 5 }); // Starting position for lesson 8 (treasure hunt)
+      setCharacterPosition({ x: 11, y: 13 }); // Starting position for lesson 8
     } else {
-      setCharacterPosition({ x: 1, y: 5 });
+      setBlueGem8Collected(false);
+      setRedGem8Collected(false);
+      setGreenGem8Collected(false);
     }
     setCharacterDirection('right');
     setCharacterState('idle');
+    // Reset gem collection state
+    setBlueGemCollected(false);
+    setRedGemCollected(false);
   };
   
   // Show hint function
@@ -733,21 +747,10 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
   
   // Show solution function
   const showSolution = () => {
-    if (activeLessonId === 4) {
-      setCode('hero.moveDown(3)\nhero.moveLeft(3)\nhero.moveUp(9)\nhero.moveRight(4)');
-      setExecutionLogs(prev => [...prev, '🔍 Solution: Use the exact sequence to visit all waypoints in order.']);
-    } else if (activeLessonId === 5) {
-      setCode('hero.moveDown(10)\nhero.moveUp(10)');
-      setExecutionLogs(prev => [...prev, '🔍 Solution: Move down to collect the book, then return to the start.']);
-    } else if (activeLessonId === 6) {
-      setCode('hero.moveRight(8)');
-      setExecutionLogs(prev => [...prev, '🔍 Solution: Move right to collect the diamond.']);
-    } else if (activeLessonId === 7) {
-      setCode('hero.moveDown(12)\nhero.moveLeft(3)\nhero.moveRight(9)');
-      setExecutionLogs(prev => [...prev, '🔍 Solution: First go down and left to get the blue gem, then right to get the red gem.']);
-    } else if (activeLessonId === 8) {
-      setCode('hero.moveUp(3)\nhero.moveDown(3)\nhero.moveRight(3)\nhero.moveLeft(6)\nhero.moveDown(3)');
-      setExecutionLogs(prev => [...prev, '🔍 Solution: Get all three treasures by visiting each location in order.']);
+    const lessonData = CS1_LESSONS.find(l => l.id === activeLessonId);
+    if (lessonData && lessonData.solution) {
+      setCode(lessonData.solution);
+      setExecutionLogs(prev => [...prev, `🔍 Solution: ${lessonData.solution}`]);
     } else {
       setCode('hero.moveRight()');
       setExecutionLogs(prev => [...prev, '🔍 Solution: Use hero.moveRight() to move your character to the right.']);
@@ -814,6 +817,63 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
     }
   }, [activeLessonId, characterPosition, potionCollected]);
 
+  // Set correct starting position when lesson changes
+  useEffect(() => {
+    if (activeLessonId === 6) {
+      setCharacterPosition({ x: 2, y: 8 });
+      setCharacterDirection('right');
+      setCharacterState('idle');
+    }
+  }, [activeLessonId]);
+
+  // Add collectible logic for lesson 7 gems
+  useEffect(() => {
+    if (activeLessonId === 7) {
+      if (characterPosition.x === 2 && characterPosition.y === 13 && !blueGemCollected) {
+        setBlueGemCollected(true);
+      }
+      if (characterPosition.x === 11 && characterPosition.y === 13 && !redGemCollected) {
+        setRedGemCollected(true);
+      }
+      // Show success when both gems are collected
+      if (blueGemCollected && redGemCollected && !isSuccess) {
+        setIsSuccess(true);
+        setExecutionLogs(logs => [...logs, "🎉 Success! You've collected both gems!"]);
+        createSuccessConfetti();
+      }
+    }
+  }, [activeLessonId, characterPosition, blueGemCollected, redGemCollected, isSuccess]);
+
+  // Add for lesson 8 spawn point
+  useEffect(() => {
+    if (activeLessonId === 8) {
+      setCharacterPosition({ x: 11, y: 13 });
+      setCharacterDirection('right');
+      setCharacterState('idle');
+    }
+  }, [activeLessonId]);
+
+  // Add collection logic for lesson 8 gems
+  useEffect(() => {
+    if (activeLessonId === 8) {
+      if (characterPosition.x === 2 && characterPosition.y === 13 && !blueGem8Collected) {
+        setBlueGem8Collected(true);
+      }
+      if (characterPosition.x === 2 && characterPosition.y === 5 && !redGem8Collected) {
+        setRedGem8Collected(true);
+      }
+      if (characterPosition.x === 9 && characterPosition.y === 5 && !greenGem8Collected) {
+        setGreenGem8Collected(true);
+      }
+      // Show success when all three gems are collected
+      if (blueGem8Collected && redGem8Collected && greenGem8Collected && !isSuccess) {
+        setIsSuccess(true);
+        setExecutionLogs(logs => [...logs, "🎉 Success! You've collected all three gems!"]);
+        createSuccessConfetti();
+      }
+    }
+  }, [activeLessonId, characterPosition, blueGem8Collected, redGem8Collected, greenGem8Collected, isSuccess]);
+
   // Return the interactive lesson view if in lesson mode
   if (isLessonActive && activeLessonId) {
     const lessonData = CS1_LESSONS.find(l => l.id === activeLessonId) || CS1_LESSONS[0];
@@ -826,11 +886,19 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
         {/* Header */}
         <div className="bg-blue-600 py-4">
           <div className="container mx-auto px-4 flex items-center">
-            <button onClick={onBack} className="mr-4 text-white hover:text-blue-200">
+            <button 
+              onClick={() => {
+                setShowAllCourses(true);
+                setSelectedLesson(null);
+                setIsLessonActive(false);
+                navigate('/academy-course');
+              }}
+              className="mr-4 text-white hover:text-blue-200"
+            >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              </button>
+            </button>
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold">Lesson {lessonData.lessonNumber}: {lessonData.title}</h1>
@@ -937,6 +1005,97 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                               </div>
                             );
                           }
+                          // Show diamond images at (2,13) and (11,13) for lesson 7
+                          if (activeLessonId === 7 && x === 2 && y === 13 && !blueGemCollected) {
+                            return (
+                              <div
+                                key={`cell-${x}-${y}`}
+                                style={{
+                                  width: '6.66%',
+                                  height: '100%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  position: 'relative',
+                                  background: 'transparent',
+                                }}
+                              >
+                                <img src="/images/gem-blue.png" alt="Blue Gem" style={{ width: 40, height: 40 }} />
+                              </div>
+                            );
+                          }
+                          if (activeLessonId === 7 && x === 11 && y === 13 && !redGemCollected) {
+                            return (
+                              <div
+                                key={`cell-${x}-${y}`}
+                                style={{
+                                  width: '6.66%',
+                                  height: '100%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  position: 'relative',
+                                  background: 'transparent',
+                                }}
+                              >
+                                <img src="/images/gem-red.png" alt="Red Gem" style={{ width: 40, height: 40 }} />
+                              </div>
+                            );
+                          }
+                          if (activeLessonId === 8 && x === 2 && y === 13 && !blueGem8Collected) {
+                            return (
+                              <div
+                                key={`cell-${x}-${y}`}
+                                style={{
+                                  width: '6.66%',
+                                  height: '100%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  position: 'relative',
+                                  background: 'transparent',
+                                }}
+                              >
+                                <img src="/images/gem-blue.png" alt="Blue Gem" style={{ width: 40, height: 40 }} />
+                              </div>
+                            );
+                          }
+                          if (activeLessonId === 8 && x === 2 && y === 5 && !redGem8Collected) {
+                            return (
+                              <div
+                                key={`cell-${x}-${y}`}
+                                style={{
+                                  width: '6.66%',
+                                  height: '100%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  position: 'relative',
+                                  background: 'transparent',
+                                }}
+                              >
+                                <img src="/images/gem-red.png" alt="Red Gem" style={{ width: 40, height: 40 }} />
+                              </div>
+                            );
+                          }
+                          if (activeLessonId === 8 && x === 9 && y === 5 && !greenGem8Collected) {
+                            return (
+                              <div
+                                key={`cell-${x}-${y}`}
+                                style={{
+                                  width: '6.66%',
+                                  height: '100%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  position: 'relative',
+                                  background: 'transparent',
+                                }}
+                              >
+                                <img src="/images/gem-green.png" alt="Green Gem" style={{ width: 40, height: 40 }} />
+                              </div>
+                            );
+                          }
                           return (
                             <div
                               key={`cell-${x}-${y}`}
@@ -1004,9 +1163,9 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                     height: '80px',
                     zIndex: 10,
                     transition: 'all 0.5s ease',
-                    left: `${characterPosition.x * 6.66}%`,
-                    top: `${characterPosition.y * 6.66}%`,
-                    transform: 'translate(-50%, -50%)',
+                    left: `calc(${characterPosition.x * 6.66}% + 35px)`, // move right by 3px more
+                    top: `calc(${characterPosition.y * 6.66}% + 32px)`, // keep down offset
+                    transform: 'translate(-50%, -100%)',
                     pointerEvents: 'none',
                     display: 'flex',
                     justifyContent: 'center',
@@ -1127,7 +1286,7 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center">
             <button 
-              onClick={onBack} 
+              onClick={() => navigate('/academy-course')}
               className="mr-4 p-2 rounded-full hover:bg-white hover:bg-opacity-10 transition-colors"
             >
               <ArrowLeft size={20} />

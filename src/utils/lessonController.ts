@@ -63,30 +63,30 @@ const getLevelConfig = async (lessonId: number) => {
   try {
     let config;
     switch (lessonId) {
-      case 1:
-        config = (await import('../maps/xcodeacademy/sc1/level1/meetthehero')).default;
-        break;
-      case 2:
-        config = (await import('../maps/xcodeacademy/sc1/level2/directions')).default;
-        break;
-      case 3:
-        config = (await import('../maps/xcodeacademy/sc1/level3/collecting')).default;
-        break;
-      case 4:
-        config = (await import('../maps/xcodeacademy/sc1/level4/waypoints')).default;
-        break;
-      case 5:
-        config = (await import('../maps/xcodeacademy/sc1/level5/variable')).default;
-        break;
-      case 6:
-        config = (await import('../maps/xcodeacademy/sc1/level6/collect_the_diamond')).default;
-        break;
-      case 7:
-        config = (await import('../maps/xcodeacademy/sc1/level7/simple_conditions')).default;
-        break;
-      case 8:
-        config = (await import('../maps/xcodeacademy/sc1/level8/threecollectibles')).default;
-        break;
+      // case 1:
+      //   config = (await import('../maps/xcodeacademy/sc1/level1/meetthehero')).default;
+      //   break;
+      // case 2:
+      //   config = (await import('../maps/xcodeacademy/sc1/level2/directions')).default;
+      //   break;
+      // case 3:
+      //   config = (await import('../maps/xcodeacademy/sc1/level3/collecting')).default;
+      //   break;
+      // case 4:
+      //   config = (await import('../maps/xcodeacademy/sc1/level4/waypoints')).default;
+      //   break;
+      // case 5:
+      //   config = (await import('../maps/xcodeacademy/sc1/level5/variable')).default;
+      //   break;
+      // case 6:
+      //   config = (await import('../maps/xcodeacademy/sc1/level6/collect_the_diamond')).default;
+      //   break;
+      // case 7:
+      //   config = (await import('../maps/xcodeacademy/sc1/level7/simple_conditions')).default;
+      //   break;
+      // case 8:
+      //   config = (await import('../maps/xcodeacademy/sc1/level8/threecollectibles')).default;
+      //   break;
       default:
         return null;
     }
@@ -154,36 +154,34 @@ export const getLessonStartPosition = async (lessonId: number): Promise<{ x: num
   try {
     let config;
     switch (lessonId) {
-      case 1:
-        config = (await import('../maps/xcodeacademy/sc1/level1/meetthehero')).default;
-        break;
-      case 2:
-        config = (await import('../maps/xcodeacademy/sc1/level2/directions')).default;
-        break;
-      case 3:
-        config = (await import('../maps/xcodeacademy/sc1/level3/collecting')).default;
-        break;
-      case 4:
-        config = (await import('../maps/xcodeacademy/sc1/level4/waypoints')).default;
-        break;
-      case 5:
-        config = (await import('../maps/xcodeacademy/sc1/level5/variable')).default;
-        break;
-      case 6:
-        config = (await import('../maps/xcodeacademy/sc1/level6/collect_the_diamond')).default;
-        break;
-      case 7:
-        config = (await import('../maps/xcodeacademy/sc1/level7/simple_conditions')).default;
-        break;
-      case 8:
-        config = (await import('../maps/xcodeacademy/sc1/level8/threecollectibles')).default;
-        break;
+      // case 1:
+      //   config = (await import('../maps/xcodeacademy/sc1/level1/meetthehero')).default;
+      //   break;
+      // case 2:
+      //   config = (await import('../maps/xcodeacademy/sc1/level2/directions')).default;
+      //   break;
+      // case 3:
+      //   config = (await import('../maps/xcodeacademy/sc1/level3/collecting')).default;
+      //   break;
+      // case 4:
+      //   config = (await import('../maps/xcodeacademy/sc1/level4/waypoints')).default;
+      //   break;
+      // case 5:
+      //   config = (await import('../maps/xcodeacademy/sc1/level5/variable')).default;
+      //   break;
+      // case 6:
+      //   config = (await import('../maps/xcodeacademy/sc1/level6/collect_the_diamond')).default;
+      //   break;
+      // case 7:
+      //   config = (await import('../maps/xcodeacademy/sc1/level7/simple_conditions')).default;
+      //   break;
+      // case 8:
+      //   config = (await import('../maps/xcodeacademy/sc1/level8/threecollectibles')).default;
+      //   break;
       default:
         config = null;
     }
-    if (config && config.playerStart) {
-      return config.playerStart;
-    }
+    // No external config, always use fallback below
   } catch (e) {
     // Ignore errors and fall back to defaults
   }
