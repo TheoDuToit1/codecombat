@@ -1,5 +1,5 @@
 import React from 'react';
-import { LevelConfig } from '../types/gauntlet';
+import { LevelConfig } from '../types/XCodeLevelTypes';
 
 interface MinimapOverlayProps {
   level: LevelConfig;

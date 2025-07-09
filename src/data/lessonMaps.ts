@@ -1,4 +1,4 @@
-import { LevelConfig } from '../types/gauntlet';
+import { LevelConfig } from '../types/XCodeLevelTypes';
 import meetTheHero from '../maps/xcodeacademy/sc1/level1/meetthehero';
 import directions from '../maps/xcodeacademy/sc1/level2/directions';
 import collecting from '../maps/xcodeacademy/sc1/level3/collecting';

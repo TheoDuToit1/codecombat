@@ -1,6 +1,6 @@
 import React from 'react';
 import { MinimapOverlay } from './MinimapOverlay';
-import { LevelConfig } from '../types/gauntlet';
+import { LevelConfig } from '../types/XCodeLevelTypes';
 import { Position } from '../types/game';
 
 // Stub InventoryPanel

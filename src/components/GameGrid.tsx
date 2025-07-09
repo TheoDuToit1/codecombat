@@ -921,6 +921,21 @@ export const GameGrid: React.FC<GameGridProps> = ({
             />
           </div>
         )}
+        {/* Spike Trap Overlay for Lesson 9 at (6,5) */}
+        {level.lessonNumber === 9 && (
+          <img
+            src={require('../../public/images/Spike_Trap.webp')}
+            alt="spike-trap"
+            style={{
+              position: 'absolute',
+              left: 6 * tileSize,
+              top: 5 * tileSize,
+              width: tileSize,
+              height: tileSize,
+              zIndex: 500
+            }}
+          />
+        )}
         <div 
           className="grid-scaling-container"
           style={{

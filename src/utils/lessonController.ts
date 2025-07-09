@@ -1,5 +1,5 @@
 import { CS1Lesson } from '../data/cs1LessonData';
-import { SuccessCriteria } from '../types/gauntlet';
+import { SuccessCriteria } from '../types/XCodeLevelTypes';
 
 // Define a type that matches the actual lesson data structure
 interface LessonData {

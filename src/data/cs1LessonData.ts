@@ -18,6 +18,7 @@ export interface CS1Lesson {
   codeExample?: string;
   hints?: string[];
   unlocks?: string;
+  solution?: string;
 }
 
 export const CS1_LESSONS = [
@@ -28,6 +29,7 @@ export const CS1_LESSONS = [
     title: "Meet Your Hero",
     description: "Cross the Syntaxia Courtyard and reach the sparkling fountain.",
     codeExample: "hero.moveUp()\nhero.moveUp()",
+    solution: "hero.moveUp()\nhero.moveUp()",
     goals: ["Move your hero to reach the fountain", "Understand grid movement", "Complete your first quest"],
     concept: "Movement",
     difficulty: 1,
@@ -43,6 +45,7 @@ export const CS1_LESSONS = [
     title: "Directions and Movement",
     description: "Visit the four corners of the Syntaxia Courtyard.",
     codeExample: "hero.moveLeft()\nhero.moveDown()\nhero.moveRight()\nhero.moveUp()",
+    solution: "hero.moveLeft()\nhero.moveDown()\nhero.moveRight()\nhero.moveUp()",
     goals: ["Move in all four directions", "Explore the courtyard corners", "Practice path planning"],
     concept: "Movement",
     difficulty: 1,
@@ -58,6 +61,7 @@ export const CS1_LESSONS = [
     title: "Move Multiple Steps",
     description: "Learn how to move your hero several spaces at once by adding a number in the brackets.",
     codeExample: "hero.moveDown(3)",
+    solution: "hero.moveDown(3)",
     goals: ["Move your hero multiple spaces in one command", "Use numbers as parameters", "Practice efficient movement"],
     concept: "Function Parameters",
     difficulty: 1,
@@ -77,6 +81,7 @@ export const CS1_LESSONS = [
     title: "Waypoint Challenge",
     description: "Reach all four waypoints in only 4 moves using multi-step movement. Each move must use a number in the brackets.",
     codeExample: "hero.moveDown(3)\nhero.moveLeft(3)\nhero.moveUp(9)\nhero.moveRight(4)",
+    solution: "hero.moveDown(3)\nhero.moveLeft(3)\nhero.moveUp(9)\nhero.moveRight(4)",
     goals: [
       "Reach all four waypoints in order: (11,14) → (8,14) → (8,5) → (12,5)",
       "Use exactly 4 movement commands, each with a number in the brackets."
@@ -99,6 +104,7 @@ export const CS1_LESSONS = [
     title: "What is a Variable?",
     description: "Collect and return to starting point in only 2 code lines.",
     codeExample: "hero.moveDown(10)\nhero.moveUp(10)",
+    solution: "hero.moveDown(10)\nhero.moveUp(10)",
     goals: [
       "Understand variables and how they store values.",
       "Use variables in movement commands.",
@@ -122,6 +128,7 @@ export const CS1_LESSONS = [
     title: "Collect the Potion",
     description: "Move your hero to collect the healing potion!",
     codeExample: "hero.moveRight(8)",
+    solution: "hero.moveRight(8)",
     goals: ["Use hero.moveRight() command", "Move multiple steps at once", "Collect your first potion"],
     concept: "Movement",
     difficulty: 1,
@@ -137,6 +144,7 @@ export const CS1_LESSONS = [
     title: "Collect Two Gems",
     description: "Move your hero to collect two special gems!",
     codeExample: "hero.moveD__n(12)\nhero.move_ef_(3)\nhero.move_i_ht(9)",
+    solution: "hero.moveD__n(12)\nhero.move_ef_(3)\nhero.move_i_ht(9)",
     goals: ["Move in multiple directions", "Collect two different gems", "Plan a multi-step path"],
     concept: "Multi-Direction",
     difficulty: 1,
@@ -168,7 +176,7 @@ export const CS1_LESSONS = [
     lessonNumber: 9,
     title: "Hazard Zones",
     description: "Learn to avoid traps using logic.",
-    codeExample: "if (!tile.isHazard) hero.move();",
+    codeExample: "if trap:\n    hero.moveRight()",
     goals: ["Use conditionals to survive."],
     concept: "",
     difficulty: 1,

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { GameGrid } from './GameGrid';
-import { LevelConfig } from '../types/gauntlet';
+import { LevelConfig } from '../types/XCodeLevelTypes';
 import babylon from '../maps/babylon';
 import labyrinth from '../maps/labyrinth';
 import { Link } from 'react-router-dom';

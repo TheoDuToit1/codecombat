@@ -63,8 +63,8 @@ export class CodeExecutor {
       this.currentLine = executableLineIndex;
       onUpdate(this.gameState, this.logs, this.currentLine, this.codeLines);
       
-      // Add delay for visual effect
-      await this.delay(800);
+      // Increased delay for better visibility of highlighting (from 800ms to 1200ms)
+      await this.delay(1200);
       
       // Execute the line
       await this.executeLine(line);
@@ -79,8 +79,8 @@ export class CodeExecutor {
       
       executableLineIndex++;
       
-      // Add delay between commands
-      await this.delay(400);
+      // Increased delay between commands for better visibility (from 400ms to 800ms)
+      await this.delay(800);
     }
   }
 

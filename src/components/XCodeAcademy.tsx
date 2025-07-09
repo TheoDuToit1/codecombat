@@ -30,6 +30,9 @@ import {
 // Import our lesson animations CSS
 import '../styles/lessonAnimations.css';
 
+// Add this at the top level, before any function/component usage
+const SPIKE_TRAP_POS = { x: 6, y: 5 };
+
 // CSS for the glowing animation
 const glowingGreenButtonStyle = {
   animation: 'glowingGreen 2s ease-in-out infinite',
@@ -90,7 +93,87 @@ const animationStyles = `
     animation: confetti-fall 4s ease-out forwards;
   }
   
-  /* Success message animation */
+  /* Victory screen animations */
+  @keyframes victory-background {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  
+  @keyframes victory-image-appear {
+    0% { transform: translateY(100px) scale(0.5); opacity: 0; }
+    40% { transform: translateY(-20px) scale(1.1); opacity: 1; }
+    60% { transform: translateY(0) scale(1); opacity: 1; }
+    80% { transform: translateY(-10px) scale(1.05); opacity: 1; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+  }
+  
+  @keyframes victory-button-appear {
+    0% { transform: translateY(50px); opacity: 0; }
+    70% { transform: translateY(-10px); opacity: 1; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+  
+  .victory-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    animation: victory-background 0.5s ease-out forwards;
+  }
+  
+  .victory-image {
+    width: 350px;
+    height: auto;
+    animation: victory-image-appear 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    animation-delay: 0.2s;
+    opacity: 0;
+    filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.5));
+  }
+  
+  .victory-button {
+    margin-top: 40px;
+    animation: victory-button-appear 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    animation-delay: 1s;
+    opacity: 0;
+    transition: all 0.3s ease;
+  }
+  
+  .victory-button:hover {
+    transform: scale(1.1);
+    filter: brightness(1.2);
+  }
+  
+  .victory-stars {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: radial-gradient(circle, rgba(30,30,60,0) 0%, rgba(15,15,30,1) 100%);
+    overflow: hidden;
+  }
+  
+  .star {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background-color: white;
+    animation: twinkle 2s infinite alternate;
+  }
+  
+  @keyframes twinkle {
+    0% { opacity: 0.2; }
+    100% { opacity: 1; }
+  }
+  
+  /* Success message animation (legacy) */
   @keyframes success-appear {
     0% { transform: scale(0.5); opacity: 0; }
     50% { transform: scale(1.2); opacity: 1; }
@@ -112,6 +195,69 @@ const animationStyles = `
     z-index: 100;
     animation: success-appear 0.8s ease-out forwards;
     text-align: center;
+  }
+  
+  @keyframes bounceIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    60% { transform: scale(1.2); opacity: 1; }
+    80% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+  }
+  .victory-image {
+    /* ...existing styles... */
+    animation: bounceIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, victory-image-appear 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    animation-delay: 0.1s, 0.2s;
+    opacity: 0;
+  }
+  @keyframes confetti-fall {
+    0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(600px) rotate(360deg); opacity: 0; }
+  }
+  .confetti-piece {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    opacity: 0.8;
+    animation: confetti-fall 2.5s linear forwards;
+    z-index: 1100;
+  }
+  @keyframes button-pop {
+    0% { transform: scale(0.8); }
+    60% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+  .victory-button {
+    /* ...existing styles... */
+    animation: button-pop 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) 1.2s both, victory-button-appear 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    box-shadow: 0 0 16px 2px rgba(255,255,255,0.2);
+  }
+  .victory-button:hover {
+    transform: scale(1.12) rotate(-2deg);
+    filter: brightness(1.2);
+    box-shadow: 0 0 32px 4px rgba(255,255,255,0.3);
+  }
+  @keyframes text-pop {
+    0% { transform: scale(0.5); opacity: 0; }
+    60% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .victory-text {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #FFD700;
+    text-shadow: 0 2px 8px #000, 0 0 32px #FFD700;
+    animation: text-pop 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.2s both;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.1em;
+  }
+  @keyframes star-bg-move {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 100% 100%; }
+  }
+  .victory-stars {
+    /* ...existing styles... */
+    animation: star-bg-move 20s linear infinite;
   }
 `;
 
@@ -238,11 +384,16 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
   const [codeError, setCodeError] = useState<string | null>(null);
   const [isMoving, setIsMoving] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
+  const [showGoals, setShowGoals] = useState<boolean>(true);
+  const [playVictorySound, setPlayVictorySound] = useState<boolean>(false);
   
   // State for character
   const [characterPosition, setCharacterPosition] = useState({ x: 1, y: 5 });
   const [characterDirection, setCharacterDirection] = useState<'up' | 'down' | 'left' | 'right'>('right');
   const [characterState, setCharacterState] = useState<'idle' | 'walk' | 'attack'>('idle');
+  
+  // State for goal completion
+  const [completedGoals, setCompletedGoals] = useState<{[key: string]: boolean}>({});
   
   // Track which directions have been executed (for lesson 2)
   const [directionsExecuted, setDirectionsExecuted] = useState({
@@ -272,6 +423,10 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
   const [redGem8Collected, setRedGem8Collected] = useState(false);
   const [greenGem8Collected, setGreenGem8Collected] = useState(false);
   
+  // Add to component state:
+  const [lastExecutedLine, setLastExecutedLine] = useState<number>(0);
+  const [lastCodeSnapshot, setLastCodeSnapshot] = useState<string[]>([]);
+  
   // Reset moveUp counter when code or lesson changes
   useEffect(() => {
     // Reset the counter when code changes or lesson changes
@@ -280,8 +435,18 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
   
   // Effect to check if we're in lesson mode from URL params
   useEffect(() => {
+    console.log("lessonId param changed:", lessonId);
+    
     if (lessonId) {
       const lessonIdNum = parseInt(lessonId, 10);
+      console.log("Setting active lesson to:", lessonIdNum);
+      
+      // Reset states from previous lesson
+      setIsSuccess(false);
+      setPlayVictorySound(false);
+      resetGame();
+      
+      // Set up new lesson
       setSelectedLesson(lessonIdNum);
       setIsLessonActive(true);
       setActiveLessonId(lessonIdNum);
@@ -320,7 +485,7 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
         }
       });
     }
-  }, [lessonId]);
+  }, [lessonId, navigate]);
 
   // Load progress on component mount
   useEffect(() => {
@@ -416,288 +581,335 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
 
   // Update the movement functions to move grid by grid
   const moveCharacter = (direction: 'up' | 'down' | 'left' | 'right', steps: number = 1) => {
-    // Set the direction first
     setCharacterDirection(direction);
-    
-    // Move step by step with visible animation
     let stepsRemaining = steps;
     const moveStep = () => {
       if (stepsRemaining <= 0) return;
-      
       setCharacterState('walk');
-      
-      // Move one step in the specified direction
       setCharacterPosition(prev => {
         let newX = prev.x;
         let newY = prev.y;
-        
         switch (direction) {
-          case 'up':
-            newY = Math.max(0, prev.y - 1);
-            break;
-          case 'down':
-            newY = Math.min(14, prev.y + 1);
-            break;
-          case 'left':
-            newX = Math.max(0, prev.x - 1);
-            break;
-          case 'right':
-            newX = Math.min(14, prev.x + 1);
-            break;
+          case 'up':    newY = Math.max(0, prev.y - 1); break;
+          case 'down':  newY = Math.min(14, prev.y + 1); break;
+          case 'left':  newX = Math.max(0, prev.x - 1); break;
+          case 'right': newX = Math.min(14, prev.x + 1); break;
         }
-        
-        // Add to execution log only on the first step
-        if (stepsRemaining === steps) {
+        // --- OBJECT DETECTION & AUTO-AVOIDANCE FOR LESSON 9 ---
+        if (
+          activeLessonId === 9 &&
+          newX === SPIKE_TRAP_POS.x &&
+          newY === SPIKE_TRAP_POS.y
+        ) {
+          // Try to go around: prefer up, then down, then left, then right
+          // Try up
+          if (prev.y > 0 && !(prev.x === SPIKE_TRAP_POS.x && prev.y - 1 === SPIKE_TRAP_POS.y)) {
           setExecutionLogs(logs => [
             ...logs,
-            `Character moving ${direction} ${steps} step(s)`
+              `<span style='color: #fbbf24;'>Avoided spike trap at (6,5) by moving up!</span>`
+            ]);
+            return { x: prev.x, y: prev.y - 1 };
+          }
+          // Try down
+          if (prev.y < 14 && !(prev.x === SPIKE_TRAP_POS.x && prev.y + 1 === SPIKE_TRAP_POS.y)) {
+            setExecutionLogs(logs => [
+              ...logs,
+              `<span style='color: #fbbf24;'>Avoided spike trap at (6,5) by moving down!</span>`
+            ]);
+            return { x: prev.x, y: prev.y + 1 };
+          }
+          // Try left
+          if (prev.x > 0 && !(prev.x - 1 === SPIKE_TRAP_POS.x && prev.y === SPIKE_TRAP_POS.y)) {
+            setExecutionLogs(logs => [
+              ...logs,
+              `<span style='color: #fbbf24;'>Avoided spike trap at (6,5) by moving left!</span>`
+            ]);
+            return { x: prev.x - 1, y: prev.y };
+          }
+          // Try right
+          if (prev.x < 14 && !(prev.x + 1 === SPIKE_TRAP_POS.x && prev.y === SPIKE_TRAP_POS.y)) {
+            setExecutionLogs(logs => [
+              ...logs,
+              `<span style='color: #fbbf24;'>Avoided spike trap at (6,5) by moving right!</span>`
+            ]);
+            return { x: prev.x + 1, y: prev.y };
+          }
+          // If all else fails, stay in place
+          setExecutionLogs(logs => [
+            ...logs,
+            `<span style='color: #f87171;'>No safe detour found! Staying in place.</span>`
           ]);
+          return prev;
         }
-        
-        // Store final position for logging
-        const finalPos = { x: newX, y: newY };
-        
-        // Check specifically for lesson 4 success at position (12,5)
-        if (activeLessonId === 4 && newX === 12 && newY === 5) {
-          setTimeout(() => {
-            setIsSuccess(true);
-            setExecutionLogs(logs => [
-              ...logs,
-              "🎉 Success! You've completed the waypoint challenge!"
-            ]);
-            createSuccessConfetti();
-          }, 500);
-        }
-        
-        // If this is the last step, log the final position
-        if (stepsRemaining === 1) {
-          setTimeout(() => {
-            setExecutionLogs(logs => [
-              ...logs,
-              `Character arrived at position (${finalPos.x},${finalPos.y})`
-            ]);
-          }, 400);
-        }
-        
-        return finalPos;
+        // --- END OBJECT DETECTION ---
+        // ... rest of your code ...
+        return { x: newX, y: newY };
       });
-      
-      // Decrement steps remaining
       stepsRemaining--;
-      
-      // Set back to idle briefly between steps
       setTimeout(() => {
         setCharacterState('idle');
-        
-        // If more steps remain, continue after a short delay
         if (stepsRemaining > 0) {
           setTimeout(moveStep, 300);
         }
       }, 300);
     };
-    
-    // Start the step-by-step movement
     moveStep();
   };
 
   // Update the executeCode function to handle empty code
   const executeCode = (code: string) => {
     if (isRunning) return;
-    // Check if code is empty
     if (!code || code.trim() === '') {
       setExecutionLogs(['<span class="zoom-effect flashing-orange-gradient">Code first!</span>']);
       setTimeout(() => { setExecutionLogs([]); }, 2000);
+      setCurrentExecutingLine(-1);
       return;
     }
     setIsRunning(true);
     setExecutionLogs([]);
-    // Local tracking for lesson directions
     let directionsUsedThisRun = { up: false, down: false, left: false, right: false };
     if (activeLessonId === 2) {
       setDirectionsExecuted({ up: false, down: false, left: false, right: false });
     }
-    try {
-      // Parse the code into separate lines/commands
-      const lines = code.split('\n').filter(line => 
-        line.trim() && !line.trim().startsWith('//') // Skip empty lines and comments
-      );
-      let currentLineIndex = 0;
-      const executeNextCommand = () => {
-        if (currentLineIndex >= lines.length) {
-          setIsRunning(false);
-          
-          // Check for lesson success using our standardized controller
-          if (activeLessonId) {
-            checkLessonSuccess(
-              activeLessonId,
-              {
-                code,
-                characterPosition,
-                directionsUsed: directionsUsedThisRun
-              }
-            ).then(result => {
-              if (result.success) {
-                // Use our standardized success handler
-                onLessonSuccess({
-                  lessonId: activeLessonId,
-                  successMessage: result.message,
-                  onStateChange: (stateOrFn) => {
-                    if (typeof stateOrFn === 'function') {
-                      const newState = stateOrFn({
-                        executionLogs: executionLogs,
-                        isSuccess: false,
-                        isRunning: true
-                      });
-                      
-                      if (newState.executionLogs) {
-                        setExecutionLogs(newState.executionLogs);
-                      }
-                      if (newState.isSuccess !== undefined) {
-                        setIsSuccess(newState.isSuccess);
-                      }
-                      if (newState.isRunning !== undefined) {
-                        setIsRunning(newState.isRunning);
-                      }
-            } else {
-                      if (stateOrFn.executionLogs) {
-                        setExecutionLogs(stateOrFn.executionLogs);
-                      }
-                      if (stateOrFn.isSuccess !== undefined) {
-                        setIsSuccess(stateOrFn.isSuccess);
+    // Parse code into lines (skip comments/empty)
+    const allLines = code.split('\n');
+    const lines = allLines.filter(line => line.trim() && !line.trim().startsWith('//'));
+    setCodeLines(allLines);
+    setCurrentExecutingLine(-1);
+
+    // Check if code above lastExecutedLine has changed
+    let incremental = true;
+    for (let i = 0; i < lastExecutedLine; i++) {
+      if (lastCodeSnapshot[i] !== allLines[i]) {
+        incremental = false;
+        break;
+      }
+    }
+    let startLine = 0;
+    if (incremental) {
+      startLine = lastExecutedLine;
+    } else {
+      // If code above changed, reset from top
+      setLastExecutedLine(0);
+      setLastCodeSnapshot([]);
+      startLine = 0;
+      // Also reset character/game state here
+      resetGame();
+      // After reset, update code and state again
+      setCode(code);
+      setCodeLines(allLines);
+    }
+
+    let currentLineIndex = startLine;
+    const executeNextCommand = () => {
+      if (currentLineIndex >= lines.length) {
+        setCurrentExecutingLine(-1);
+        setIsRunning(false);
+        setLastExecutedLine(lines.length);
+        setLastCodeSnapshot([...allLines]);
+        // Check for lesson success using our standardized controller
+        if (activeLessonId) {
+          checkLessonSuccess(
+            activeLessonId,
+            {
+              code,
+              characterPosition,
+              directionsUsed: directionsUsedThisRun
             }
-                      if (stateOrFn.isRunning !== undefined) {
-                        setIsRunning(stateOrFn.isRunning);
-                      }
+          ).then(result => {
+            if (result.success) {
+              // Use our standardized success handler
+              onLessonSuccess({
+                lessonId: activeLessonId,
+                successMessage: result.message,
+                onStateChange: (stateOrFn) => {
+                  if (typeof stateOrFn === 'function') {
+                    const newState = stateOrFn({
+                      executionLogs: executionLogs,
+                      isSuccess: false,
+                      isRunning: true
+                    });
+                    
+                    if (newState.executionLogs) {
+                      setExecutionLogs(newState.executionLogs);
                     }
-                  },
-                  onComplete: handleCompleteLesson
-                });
-                
-                // Force the success state to be true
-            setIsSuccess(true);
-                
-                // Create confetti using our standardized function
-                createSuccessConfetti();
-              } else {
-                // Not successful yet
-                setExecutionLogs(["Keep trying! You're on the right track."]);
-              }
-            }).catch(error => {
-              console.error("Error checking lesson success:", error);
-              setExecutionLogs(["An error occurred. Please try again."]);
-            });
+                    if (newState.isSuccess !== undefined) {
+                      setIsSuccess(newState.isSuccess);
+                    }
+                    if (newState.isRunning !== undefined) {
+                      setIsRunning(newState.isRunning);
+                    }
           } else {
-            setExecutionLogs(["Great job! Code executed successfully!"]);
-          }
-          return;
-        }
-        const currentLine = lines[currentLineIndex].trim();
-        if (currentLineIndex === 0) {
-          setExecutionLogs(["Running your code..."]);
-        }
-        // Create a hero object with movement methods
-        const hero = {
-          moveUp: (steps = 1) => {
-            if (activeLessonId === 2) directionsUsedThisRun.up = true;
-            if (activeLessonId === 2) setDirectionsExecuted(prev => ({ ...prev, up: true }));
-            
-            // Special handling for lesson 1 to ensure success
-            if (activeLessonId === 1) {
-              // Increment the moveUp counter
-              const newCount = lesson1MoveUpCount + 1;
-              setLesson1MoveUpCount(newCount);
+                    if (stateOrFn.executionLogs) {
+                      setExecutionLogs(stateOrFn.executionLogs);
+                    }
+                    if (stateOrFn.isSuccess !== undefined) {
+                      setIsSuccess(stateOrFn.isSuccess);
+            }
+                    if (stateOrFn.isRunning !== undefined) {
+                      setIsRunning(stateOrFn.isRunning);
+                    }
+                  }
+                },
+                onComplete: handleCompleteLesson
+              });
               
-              // Check if we've reached the required number of moveUp calls
-              if (newCount >= 4) {
-                // Force success for lesson 1
-                setTimeout(() => {
-                  setIsSuccess(true);
-                  setExecutionLogs(prev => [...prev, "🎉 Success! You've completed Lesson 1!"]);
-                  createSuccessConfetti();
-                }, steps * 700 + 500);
-              }
+              // Force the success state to be true
+          setIsSuccess(true);
+              
+              // Create confetti using our standardized function
+              createSuccessConfetti();
+            } else {
+              // Not successful yet
+              setExecutionLogs(["Keep trying! You're on the right track."]);
             }
+          }).catch(error => {
+            console.error("Error checking lesson success:", error);
+            setExecutionLogs(["An error occurred. Please try again."]);
+          });
+        } else {
+          setExecutionLogs(["Great job! Code executed successfully!"]);
+        }
+        return;
+      }
+      
+      // Highlight the current line being executed
+      // Find the actual line number in the original code (accounting for comments and blank lines)
+      let actualLineIndex = 0;
+      const codeToCheck = code.split('\n');
+      let linesProcessed = 0;
+      
+      for (let i = 0; i < codeToCheck.length; i++) {
+        const line = codeToCheck[i].trim();
+        if (line && !line.startsWith('//')) {
+          if (linesProcessed === currentLineIndex) {
+            actualLineIndex = i;
+            break;
+          }
+          linesProcessed++;
+        }
+      }
+      
+      // Set the current executing line for highlight
+      setCurrentExecutingLine(actualLineIndex);
+      
+      const currentLine = lines[currentLineIndex].trim();
+      if (currentLineIndex === 0) {
+        setExecutionLogs(["Running your code..."]);
+      }
+      
+      // Add a small delay before executing to make line highlighting visible
+      setTimeout(() => {
+      // Create a hero object with movement methods
+      const hero = {
+        moveUp: (steps = 1) => {
+          if (activeLessonId === 2) directionsUsedThisRun.up = true;
+          if (activeLessonId === 2) setDirectionsExecuted(prev => ({ ...prev, up: true }));
+          
+          // Special handling for lesson 1 to ensure success
+          if (activeLessonId === 1) {
+            // Increment the moveUp counter
+            const newCount = lesson1MoveUpCount + 1;
+            setLesson1MoveUpCount(newCount);
             
-            setIsMoving(true);
-            moveCharacter('up', steps);
-            setTimeout(() => {
-              setIsMoving(false);
-              currentLineIndex++;
-              executeNextCommand();
-            }, steps * 700);
-          },
-          moveDown: (steps = 1) => {
-            if (activeLessonId === 2) directionsUsedThisRun.down = true;
-            if (activeLessonId === 2) setDirectionsExecuted(prev => ({ ...prev, down: true }));
-            setIsMoving(true);
-            moveCharacter('down', steps);
-            setTimeout(() => {
-              setIsMoving(false);
-              currentLineIndex++;
-              executeNextCommand();
-            }, steps * 700);
-          },
-          moveLeft: (steps = 1) => {
-            if (activeLessonId === 2) directionsUsedThisRun.left = true;
-            if (activeLessonId === 2) setDirectionsExecuted(prev => ({ ...prev, left: true }));
-            setIsMoving(true);
-            moveCharacter('left', steps);
-            setTimeout(() => {
-              setIsMoving(false);
-              currentLineIndex++;
-              executeNextCommand();
-            }, steps * 700);
-          },
-          moveRight: (steps = 1) => {
-            if (activeLessonId === 2) directionsUsedThisRun.right = true;
-            if (activeLessonId === 2) setDirectionsExecuted(prev => ({ ...prev, right: true }));
-            setIsMoving(true);
-            moveCharacter('right', steps);
-            setTimeout(() => {
-              setIsMoving(false);
-              currentLineIndex++;
-              executeNextCommand();
-            }, steps * 700);
-          },
-          // Add health property and usePotion method for lesson 6
-          health: 50,
-          usePotion: () => {
-            setExecutionLogs(prev => [...prev, "🧪 Used a health potion! +25 health"]);
-            hero.health += 25;
-            currentLineIndex++;
-            executeNextCommand();
-          },
-          // Add collect method for lesson 8
-          collect: () => {
-            setExecutionLogs(prev => [...prev, "💎 Collected an item!"]);
-            currentLineIndex++;
-            executeNextCommand();
-          }
-        };
-        try {
-          const executeFunction = new Function('hero', `
-            try {
-              ${currentLine}
-              return true;
-            } catch (error) {
-              return error;
+            // Check if we've reached the required number of moveUp calls
+            if (newCount >= 4) {
+              // Force success for lesson 1
+              setTimeout(() => {
+                setIsSuccess(true);
+                setExecutionLogs(prev => [...prev, "🎉 Success! You've completed Lesson 1!"]);
+                createSuccessConfetti();
+                }, steps * 900 + 500);
             }
-          `);
-          const result = executeFunction(hero);
-          if (result !== true) {
-            setCodeError("Code error, check and fix!");
-            setIsRunning(false);
           }
-        } catch (error) {
-          setCodeError("Code error, check and fix!");
-          setIsRunning(false);
+          
+          setIsMoving(true);
+          moveCharacter('up', steps);
+          setTimeout(() => {
+            setIsMoving(false);
+            currentLineIndex++;
+            executeNextCommand();
+            }, steps * 900);
+        },
+        moveDown: (steps = 1) => {
+          if (activeLessonId === 2) directionsUsedThisRun.down = true;
+          if (activeLessonId === 2) setDirectionsExecuted(prev => ({ ...prev, down: true }));
+          setIsMoving(true);
+          moveCharacter('down', steps);
+          setTimeout(() => {
+            setIsMoving(false);
+            currentLineIndex++;
+            executeNextCommand();
+            }, steps * 900);
+        },
+        moveLeft: (steps = 1) => {
+          if (activeLessonId === 2) directionsUsedThisRun.left = true;
+          if (activeLessonId === 2) setDirectionsExecuted(prev => ({ ...prev, left: true }));
+          setIsMoving(true);
+          moveCharacter('left', steps);
+          setTimeout(() => {
+            setIsMoving(false);
+            currentLineIndex++;
+            executeNextCommand();
+            }, steps * 900);
+        },
+        moveRight: (steps = 1) => {
+          if (activeLessonId === 2) directionsUsedThisRun.right = true;
+          if (activeLessonId === 2) setDirectionsExecuted(prev => ({ ...prev, right: true }));
+          setIsMoving(true);
+          moveCharacter('right', steps);
+          setTimeout(() => {
+            setIsMoving(false);
+            currentLineIndex++;
+            executeNextCommand();
+            }, steps * 900);
+        },
+        // Add health property and usePotion method for lesson 6
+        health: 50,
+        usePotion: () => {
+          setExecutionLogs(prev => [...prev, "🧪 Used a health potion! +25 health"]);
+          hero.health += 25;
+          currentLineIndex++;
+          executeNextCommand();
+        },
+        // Add collect method for lesson 8
+        collect: () => {
+          setExecutionLogs(prev => [...prev, "💎 Collected an item!"]);
+          currentLineIndex++;
+          executeNextCommand();
+        },
+        // Add findNearestSpike for lesson 9
+        findNearestSpike: () => {
+          if (activeLessonId === 9) {
+            // Always return a dummy spike object at (6,5) for lesson 9
+            return { pos: { x: 6, y: 5 } };
+          }
+          return null;
         }
       };
-      executeNextCommand();
-    } catch (error) {
-      setCodeError("Code error, check and fix!");
-      setIsRunning(false);
-    }
+      try {
+        const executeFunction = new Function('hero', `
+          try {
+            ${currentLine}
+            return true;
+          } catch (error) {
+            return error;
+          }
+        `);
+        const result = executeFunction(hero);
+        if (result !== true) {
+          setCodeError("Code error, check and fix!");
+          setIsRunning(false);
+            setCurrentExecutingLine(-1); // Reset highlighting on error
+        }
+      } catch (error) {
+        setCodeError("Code error, check and fix!");
+        setIsRunning(false);
+          setCurrentExecutingLine(-1); // Reset highlighting on error
+      }
+      }, 100);
+    };
+    executeNextCommand();
   };
   
   // Reset function
@@ -708,8 +920,25 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
     setIsRunning(false);
     setCodeError(null);
     setIsSuccess(false);
+    setCurrentExecutingLine(-1); // Reset line highlighting
     setBookCollected(false);
     setPotionCollected(false);
+    
+    // Reset the tracked directions
+    setDirectionsExecuted({ up: false, down: false, left: false, right: false });
+    
+    // Reset goal completion status for current lesson
+    if (activeLessonId) {
+      const lessonData = CS1_LESSONS.find(l => l.id === activeLessonId);
+      if (lessonData?.goals) {
+        const newCompletedGoals = {...completedGoals};
+        lessonData.goals.forEach((_, index) => {
+          delete newCompletedGoals[`lesson-${activeLessonId}-goal-${index}`];
+        });
+        setCompletedGoals(newCompletedGoals);
+      }
+    }
+    
     // Set position based on active lesson
     if (activeLessonId === 1) {
       setCharacterPosition({ x: 6, y: 14 });
@@ -735,6 +964,13 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
     // Reset gem collection state
     setBlueGemCollected(false);
     setRedGemCollected(false);
+    
+    // Reset lesson 1 specific counters
+    if (activeLessonId === 1) {
+      setLesson1MoveUpCount(0);
+    }
+    setLastExecutedLine(0);
+    setLastCodeSnapshot([]);
   };
   
   // Show hint function
@@ -769,18 +1005,63 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
 
   // Replace the createConfetti function with our standardized one
   const createConfetti = createSuccessConfetti;
+  
+  // Function to generate random star positions for victory screen
+  const generateStars = () => {
+    const stars = [];
+    for (let i = 0; i < 100; i++) {
+      const style = {
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+        width: `${Math.random() * 3 + 1}px`,
+        height: `${Math.random() * 3 + 1}px`,
+        animationDelay: `${Math.random() * 2}s`,
+        animationDuration: `${Math.random() * 3 + 1}s`,
+      };
+      stars.push(<div key={`star-${i}`} className="star" style={style} />);
+    }
+    return stars;
+  };
 
   // Handle navigation to the next lesson
   const handleNextLesson = () => {
+    console.log("handleNextLesson called, active lesson:", activeLessonId);
     if (activeLessonId) {
       const nextLessonId = activeLessonId + 1;
+      console.log("Navigating to next lesson:", nextLessonId);
+      
       // Mark current lesson as completed
       handleCompleteLesson(activeLessonId);
-      // Navigate to the next lesson
-      navigate(`/lesson/${nextLessonId}`);
-      // Reset success state
+      
+      // First reset success and sound state to prevent replay
       setIsSuccess(false);
+      setPlayVictorySound(false);
+      setIsRunning(false);
+      
+      // Then navigate to the next lesson
+      try {
+        // Use direct window.location.href which will cause full page reload
+        console.log("Navigating to:", `/lesson/${nextLessonId}`);
+        window.location.href = `/lesson/${nextLessonId}`;
+      } catch (err) {
+        console.error("Navigation error:", err);
+        alert("Navigation failed. Please try again.");
+      }
+    } else {
+      console.log("No active lesson ID");
+      alert("Error: No active lesson found");
     }
+  };
+  
+  // Handle navigation back to lesson selection
+  const handleBackToLessons = () => {
+    // Reset states
+    setIsSuccess(false);
+    setPlayVictorySound(false);
+    setIsLessonActive(false);
+    setActiveLessonId(null);
+    // Navigate back to course page
+    if (onBack) onBack();
   };
 
   // Helper for lesson 2: check if all directions commands are present in code
@@ -873,6 +1154,96 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
       }
     }
   }, [activeLessonId, characterPosition, blueGem8Collected, redGem8Collected, greenGem8Collected, isSuccess]);
+  
+  // Play victory sound when success state changes
+  useEffect(() => {
+    if (isSuccess) {
+      setPlayVictorySound(true);
+    }
+  }, [isSuccess]);
+  
+  // Track goal completion for all lessons
+  useEffect(() => {
+    if (!activeLessonId) return;
+    const lessonData = CS1_LESSONS.find(l => l.id === activeLessonId);
+    if (!lessonData?.goals) return;
+    
+    const newCompletedGoals = {...completedGoals};
+    
+    // Check lesson-specific goals
+    switch (activeLessonId) {
+      case 1: // Lesson 1: First Steps
+        // Goal: Use moveUp command multiple times
+        if (lesson1MoveUpCount >= 4) {
+          newCompletedGoals[`lesson-${activeLessonId}-goal-0`] = true;
+        }
+        break;
+        
+      case 2: // Lesson 2: All Directions
+        // Goal: Use all four direction commands
+        if (directionsExecuted.up) newCompletedGoals[`lesson-${activeLessonId}-goal-0`] = true;
+        if (directionsExecuted.down) newCompletedGoals[`lesson-${activeLessonId}-goal-1`] = true;
+        if (directionsExecuted.left) newCompletedGoals[`lesson-${activeLessonId}-goal-2`] = true;
+        if (directionsExecuted.right) newCompletedGoals[`lesson-${activeLessonId}-goal-3`] = true;
+        break;
+        
+      case 6: // Lesson 6: Healing Potion
+        // Goal: Collect the healing potion
+        if (potionCollected) {
+          newCompletedGoals[`lesson-${activeLessonId}-goal-0`] = true;
+        }
+        break;
+        
+      case 7: // Lesson 7: Two Gems
+        // Goal: Collect blue gem
+        if (blueGemCollected) {
+          newCompletedGoals[`lesson-${activeLessonId}-goal-0`] = true;
+        }
+        // Goal: Collect red gem
+        if (redGemCollected) {
+          newCompletedGoals[`lesson-${activeLessonId}-goal-1`] = true;
+        }
+        break;
+        
+      case 8: // Lesson 8: Three Gems
+        // Goal: Use all four direction commands
+        if (Object.values(directionsExecuted).filter(Boolean).length >= 4) {
+          newCompletedGoals[`lesson-${activeLessonId}-goal-0`] = true;
+        }
+        // Goal: Collect gems
+        if (blueGem8Collected) {
+          newCompletedGoals[`lesson-${activeLessonId}-goal-1`] = true;
+        }
+        if (redGem8Collected) {
+          newCompletedGoals[`lesson-${activeLessonId}-goal-2`] = true;
+        }
+        if (greenGem8Collected) {
+          newCompletedGoals[`lesson-${activeLessonId}-goal-3`] = true;
+        }
+        break;
+    }
+    
+    // Mark all goals as complete when lesson is successfully completed
+    if (isSuccess && lessonData.goals) {
+      lessonData.goals.forEach((_, index) => {
+        newCompletedGoals[`lesson-${activeLessonId}-goal-${index}`] = true;
+      });
+    }
+    
+    setCompletedGoals(newCompletedGoals);
+  }, [
+    activeLessonId, 
+    directionsExecuted,
+    lesson1MoveUpCount,
+    potionCollected, 
+    blueGemCollected, 
+    redGemCollected,
+    blueGem8Collected,
+    redGem8Collected,
+    greenGem8Collected,
+    isSuccess
+    // completedGoals REMOVED
+  ]);
 
   // Return the interactive lesson view if in lesson mode
   if (isLessonActive && activeLessonId) {
@@ -888,12 +1259,12 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
           <div className="container mx-auto px-4 flex items-center">
             <button 
               onClick={() => {
-                setShowAllCourses(true);
-                setSelectedLesson(null);
                 setIsLessonActive(false);
-                navigate('/academy-course');
+                setActiveLessonId(null);
+                if (onBack) onBack();
               }}
               className="mr-4 text-white hover:text-blue-200"
+              title="Back to lesson selection"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -902,35 +1273,133 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold">Lesson {lessonData.lessonNumber}: {lessonData.title}</h1>
-                <div 
-                  style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    background: 'white',
-                    color: '#222',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 'bold',
-                    fontSize: '1rem',
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-                  }}
-                  onClick={() => {
-                    setIsLessonActive(false);
-                    setActiveLessonId(null);
-                    if (onBack) onBack();
-                  }}
-                  title="Back to lesson overview"
-                >
-                  T2
               </div>
-            </div>
               <p className="text-sm text-blue-200">{lessonData.description}</p>
           </div>
           </div>
         </div>
+        
+        {/* Goals dropdown section - moved higher up */}
+        <div className="relative z-50">
+          <div className="absolute top-0 left-0 mt-1">
+                          <div 
+                className={`bg-gray-800 bg-opacity-90 border-r border-y border-gray-700 transition-all duration-500 rounded-r-lg shadow-lg ${
+                  showGoals ? 'w-64' : 'w-44'
+                }`}
+                  style={{
+                  boxShadow: showGoals ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)' : '0 4px 6px -1px rgba(0, 0, 0, 0.2)'
+                }}
+            >
+              <button 
+                onClick={() => setShowGoals(!showGoals)}
+                className={`w-full py-1 px-4 flex items-center justify-between text-white rounded-r-lg ${
+                  showGoals ? 'bg-blue-700' : 'bg-gray-800 hover:bg-gray-700'
+                } transition-colors duration-300`}
+              >
+                <div className="flex items-center overflow-hidden">
+                  <span className={`mr-2 transition-all duration-300 ${showGoals ? 'scale-110' : ''}`}>🎯</span>
+                  <span className={`font-medium transition-all duration-300 ${
+                    showGoals ? 'text-white scale-105 font-bold' : 'text-gray-200'
+                  }`}>Level Goals</span>
+                </div>
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className={`h-5 w-5 transition-all duration-500 ${
+                    showGoals ? 'transform rotate-180 text-white' : 'text-blue-300'
+                  }`}
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              {/* Animated collapsible content */}
+              <div 
+                className={`overflow-hidden transition-all duration-500 ease-in-out ${
+                  showGoals ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                }`}
+              >
+                <div className="px-4 py-2 bg-gray-800 rounded-b-lg">
+                  <ul className="space-y-2">
+                    {lessonData.goals?.map((goal, index) => {
+                      const goalKey = `lesson-${lessonData.id}-goal-${index}`;
+                      const isCompleted = completedGoals[goalKey] || false;
+                      
+                      return (
+                        <li 
+                          key={index} 
+                          className={`text-sm flex items-start ${isCompleted ? 'text-green-300' : 'text-gray-300'}`}
+                          style={{ 
+                            animation: showGoals ? `fadeInRight ${0.3 + index * 0.1}s ease-out` : 'none'
+                  }}
+                  onClick={() => {
+                            // Toggle goal completion status for demo purposes
+                            setCompletedGoals(prev => ({
+                              ...prev,
+                              [goalKey]: !prev[goalKey]
+                            }));
+                          }}
+                        >
+                          <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full mr-2 ${
+                            isCompleted ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+                          }`}>
+                            {isCompleted ? (
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : (
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            )}
+                          </span> 
+                          <span className={isCompleted ? 'line-through opacity-80' : ''}>
+                            {goal}
+                          </span>
+                        </li>
+                      );
+                    }) || (
+                      <li className="text-sm text-gray-300 animate-fadeIn">
+                        <span className="text-green-400 mr-2">•</span> Complete the level objectives
+                      </li>
+                    )}
+                  </ul>
+              </div>
+            </div>
+          </div>
+          </div>
+        </div>
+
+        {/* Add animation keyframes */}
+        <style>{`
+          @keyframes fadeInRight {
+            from {
+              opacity: 0;
+              transform: translateX(-20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateX(0);
+            }
+          }
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+          }
+          @keyframes pulse {
+            0%, 100% {
+              opacity: 1;
+            }
+            50% {
+              opacity: 0.5;
+            }
+          }
+        `}</style>
 
         {/* Main content area - Make it full height */}
         <div className="h-[calc(100vh-76px)]">
@@ -972,12 +1441,34 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                                   justifyContent: 'center',
                                   position: 'relative',
                                   background: 'transparent',
+                                  flexDirection: 'column',
                                 }}
                               >
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    top: '-18px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    background: 'rgba(30,30,40,0.95)',
+                                    color: '#fbbf24',
+                                    fontWeight: 700,
+                                    fontSize: '13px',
+                                    padding: '2px 10px',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                                    border: '1.5px solid #fbbf24',
+                                    pointerEvents: 'none',
+                                    zIndex: 2,
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  Book
+                                </div>
                                 <img
                                   src="/images/book.png"
                                   alt="Book"
-                                  style={{ width: '80%', height: '80%', objectFit: 'contain', pointerEvents: 'none' }}
+                                  style={{ width: '80%', height: '80%', objectFit: 'contain', pointerEvents: 'none', zIndex: 1 }}
                                 />
                               </div>
                             );
@@ -995,12 +1486,34 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                                   justifyContent: 'center',
                                   position: 'relative',
                                   background: 'transparent',
+                                  flexDirection: 'column',
                                 }}
                               >
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    top: '-18px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    background: 'rgba(30,30,40,0.95)',
+                                    color: '#fbbf24',
+                                    fontWeight: 700,
+                                    fontSize: '13px',
+                                    padding: '2px 10px',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                                    border: '1.5px solid #fbbf24',
+                                    pointerEvents: 'none',
+                                    zIndex: 2,
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  Potion
+                                </div>
                                 <img
                                   src="/images/potion.png"
                                   alt="Potion"
-                                  style={{ width: '80%', height: '80%', objectFit: 'contain', pointerEvents: 'none' }}
+                                  style={{ width: '80%', height: '80%', objectFit: 'contain', pointerEvents: 'none', zIndex: 1 }}
                                 />
                               </div>
                             );
@@ -1018,9 +1531,31 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                                   justifyContent: 'center',
                                   position: 'relative',
                                   background: 'transparent',
+                                  flexDirection: 'column',
                                 }}
                               >
-                                <img src="/images/gem-blue.png" alt="Blue Gem" style={{ width: 40, height: 40 }} />
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    top: '-18px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    background: 'rgba(30,30,40,0.95)',
+                                    color: '#fbbf24',
+                                    fontWeight: 700,
+                                    fontSize: '13px',
+                                    padding: '2px 10px',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                                    border: '1.5px solid #fbbf24',
+                                    pointerEvents: 'none',
+                                    zIndex: 2,
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  Blue Gem
+                                </div>
+                                <img src="/images/gem-blue.png" alt="Blue Gem" style={{ width: 40, height: 40, zIndex: 1 }} />
                               </div>
                             );
                           }
@@ -1036,9 +1571,31 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                                   justifyContent: 'center',
                                   position: 'relative',
                                   background: 'transparent',
+                                  flexDirection: 'column',
                                 }}
                               >
-                                <img src="/images/gem-red.png" alt="Red Gem" style={{ width: 40, height: 40 }} />
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    top: '-18px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    background: 'rgba(30,30,40,0.95)',
+                                    color: '#fbbf24',
+                                    fontWeight: 700,
+                                    fontSize: '13px',
+                                    padding: '2px 10px',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                                    border: '1.5px solid #fbbf24',
+                                    pointerEvents: 'none',
+                                    zIndex: 2,
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  Red Gem
+                                </div>
+                                <img src="/images/gem-red.png" alt="Red Gem" style={{ width: 40, height: 40, zIndex: 1 }} />
                               </div>
                             );
                           }
@@ -1054,9 +1611,31 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                                   justifyContent: 'center',
                                   position: 'relative',
                                   background: 'transparent',
+                                  flexDirection: 'column',
                                 }}
                               >
-                                <img src="/images/gem-blue.png" alt="Blue Gem" style={{ width: 40, height: 40 }} />
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    top: '-18px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    background: 'rgba(30,30,40,0.95)',
+                                    color: '#fbbf24',
+                                    fontWeight: 700,
+                                    fontSize: '13px',
+                                    padding: '2px 10px',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                                    border: '1.5px solid #fbbf24',
+                                    pointerEvents: 'none',
+                                    zIndex: 2,
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  Blue Gem
+                                </div>
+                                <img src="/images/gem-blue.png" alt="Blue Gem" style={{ width: 40, height: 40, zIndex: 1 }} />
                               </div>
                             );
                           }
@@ -1072,9 +1651,31 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                                   justifyContent: 'center',
                                   position: 'relative',
                                   background: 'transparent',
+                                  flexDirection: 'column',
                                 }}
                               >
-                                <img src="/images/gem-red.png" alt="Red Gem" style={{ width: 40, height: 40 }} />
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    top: '-18px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    background: 'rgba(30,30,40,0.95)',
+                                    color: '#fbbf24',
+                                    fontWeight: 700,
+                                    fontSize: '13px',
+                                    padding: '2px 10px',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                                    border: '1.5px solid #fbbf24',
+                                    pointerEvents: 'none',
+                                    zIndex: 2,
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  Red Gem
+                                </div>
+                                <img src="/images/gem-red.png" alt="Red Gem" style={{ width: 40, height: 40, zIndex: 1 }} />
                               </div>
                             );
                           }
@@ -1090,9 +1691,77 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                                   justifyContent: 'center',
                                   position: 'relative',
                                   background: 'transparent',
+                                  flexDirection: 'column',
                                 }}
                               >
-                                <img src="/images/gem-green.png" alt="Green Gem" style={{ width: 40, height: 40 }} />
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    top: '-18px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    background: 'rgba(30,30,40,0.95)',
+                                    color: '#fbbf24',
+                                    fontWeight: 700,
+                                    fontSize: '13px',
+                                    padding: '2px 10px',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                                    border: '1.5px solid #fbbf24',
+                                    pointerEvents: 'none',
+                                    zIndex: 2,
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  Green Gem
+                                </div>
+                                <img src="/images/gem-green.png" alt="Green Gem" style={{ width: 40, height: 40, zIndex: 1 }} />
+                              </div>
+                            );
+                          }
+                          // Show spike-trap image at (6,5) for lesson 9
+                          if (activeLessonId === 9 && x === 6 && y === 5) {
+                            return (
+                              <div
+                                key={`cell-${x}-${y}`}
+                                style={{
+                                  width: '6.66%',
+                                  height: '100%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  position: 'relative',
+                                  background: 'transparent',
+                                  flexDirection: 'column',
+                                }}
+                              >
+                                {/* Name label above the object */}
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    top: '-18px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    background: 'rgba(30,30,40,0.95)',
+                                    color: '#fbbf24',
+                                    fontWeight: 700,
+                                    fontSize: '13px',
+                                    padding: '2px 10px',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                                    border: '1.5px solid #fbbf24',
+                                    pointerEvents: 'none',
+                                    zIndex: 2,
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  Spike Trap
+                                </div>
+                                <img
+                                  src="/images/Spike_Trap.webp"
+                                  alt="Spike Trap"
+                                  style={{ width: '80%', height: '80%', objectFit: 'contain', pointerEvents: 'none', zIndex: 1 }}
+                                />
                               </div>
                             );
                           }
@@ -1185,17 +1854,79 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                   Position: ({characterPosition.x}, {characterPosition.y})
                 </div>
 
-                {/* Success message */}
+                {/* Hidden audio for victory sound */}
+                {playVictorySound && (
+                  <audio 
+                    src="/audio/win.mp3" 
+                    autoPlay 
+                    onEnded={() => setPlayVictorySound(false)} 
+                  />
+                )}
+                
+                {/* Victory screen overlay */}
                 {isSuccess && (
-                  <div className="success-message">
-                    <div>🎉 Success!</div>
-                    <div className="text-base mt-2">Lesson {activeLessonId} Complete</div>
+                  <div className="victory-overlay">
+                    <div className="victory-stars">
+                      {generateStars()}
+                    </div>
+                    {/* Confetti */}
+                    {Array.from({ length: 40 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="confetti-piece"
+                        style={{
+                          left: `${Math.random() * 100}%`,
+                          background: `hsl(${Math.random() * 360}, 80%, 60%)`,
+                          animationDelay: `${Math.random() * 1.5}s`,
+                        }}
+                      />
+                    ))}
+                    <div className="victory-text">VICTORY!</div>
+                    <img 
+                      src="/victory.png" 
+                      alt="Victory!" 
+                      className="victory-image"
+                      onLoad={() => setPlayVictorySound(true)}
+                      onError={(e) => {
+                        const imgElement = e.currentTarget;
+                        // Fallback text if image doesn't load
+                        imgElement.style.width = "350px";
+                        imgElement.style.height = "200px";
+                        imgElement.style.background = "linear-gradient(45deg, #FFD700, #FFA500)";
+                        imgElement.style.display = "flex";
+                        imgElement.style.alignItems = "center";
+                        imgElement.style.justifyContent = "center";
+                        imgElement.style.borderRadius = "20px";
+                        imgElement.style.fontSize = "48px";
+                        imgElement.style.fontWeight = "bold";
+                        imgElement.style.textShadow = "0px 2px 5px rgba(0,0,0,0.5)";
+                        imgElement.style.boxShadow = "0px 0px 30px rgba(255, 215, 0, 0.5)";
+                        imgElement.insertAdjacentHTML('beforeend', '<div style="text-align:center">🏆<br>VICTORY!</div>');
+                      }}
+                    />
+                    <div className="flex gap-4 mt-6">
                     <button
-                      onClick={handleNextLesson}
-                      className="next-lesson-button mt-4 px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg text-lg font-medium"
+                        onClick={() => {
+                          console.log("Next lesson button clicked");
+                          handleNextLesson();
+                        }}
+                        className="victory-button px-6 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white text-xl font-bold rounded-full transition-all shadow-lg"
                     >
                       Next Lesson →
                     </button>
+                      <button
+                        onClick={handleBackToLessons}
+                        className="victory-button px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-xl font-bold rounded-full transition-all shadow-lg"
+                      >
+                        Back to Lessons
+                      </button>
+                      <button
+                        onClick={resetGame}
+                        className="victory-button px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white text-xl font-bold rounded-full transition-all shadow-lg"
+                      >
+                        Play Again
+                    </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1203,24 +1934,6 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
 
             {/* Right panel - Code editor and execution log */}
             <div className="w-full md:w-1/3 p-4 flex flex-col h-full">
-              {/* Level goals section - small and concise */}
-              <div className="bg-gray-800 rounded-lg p-3 mb-4">
-                <h3 className="text-sm font-medium text-white mb-2 flex items-center">
-                  <span className="mr-2">🎯</span> Level Goals
-                </h3>
-                <ul className="space-y-1">
-                  {lessonData.goals?.map((goal, index) => (
-                    <li key={index} className="text-xs text-gray-300 flex items-start">
-                      <span className="text-green-400 mr-1">•</span> {goal}
-                    </li>
-                  )) || (
-                    <li className="text-xs text-gray-300">
-                      <span className="text-green-400 mr-1">•</span> Complete the level objectives
-                    </li>
-                  )}
-                </ul>
-              </div>
-
               {/* Code editor section - larger height */}
               <div className="flex-1 mb-4" style={{ height: '70%', minHeight: '400px' }}>
                 <CodeEditor
@@ -1258,16 +1971,28 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                 </div>
               </div>
               
-              {/* Next lesson button when success */}
+              {/* Navigation buttons when success */}
               {isSuccess && (
-                <div className="mt-4">
+                <div className="mt-4 flex gap-2">
                   <button
-                    onClick={handleNextLesson}
-                    className="w-full px-4 py-3 rounded-lg text-md font-medium bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center next-lesson-button"
+                    onClick={handleBackToLessons}
+                    className="w-1/2 px-4 py-3 rounded-lg text-md font-medium bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center"
                   >
-                    Next Lesson
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Lessons
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setIsSuccess(false);
+                      setPlayVictorySound(false);
+                    }}
+                    className="w-1/2 px-4 py-3 rounded-lg text-md font-medium bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center"
+                  >
+                    Play Again
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
                   </button>
                 </div>
@@ -1286,8 +2011,9 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center">
             <button 
-              onClick={() => navigate('/academy-course')}
+              onClick={() => navigate('/')}
               className="mr-4 p-2 rounded-full hover:bg-white hover:bg-opacity-10 transition-colors"
+              title="Back to main menu"
             >
               <ArrowLeft size={20} />
             </button>
@@ -1583,27 +2309,6 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                       
                       {selectedLessonData.id === 1 ? (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <div 
-                            style={{
-                              width: '40px',
-                              height: '40px',
-                              borderRadius: '50%',
-                              background: 'white',
-                              color: '#222',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontWeight: 'bold',
-                              fontSize: '1.2rem',
-                              marginBottom: '8px',
-                              cursor: 'pointer',
-                              boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-                            }}
-                            onClick={() => onStartLessonLevel && onStartLessonLevel(selectedLessonData.id)}
-                            title="Go to lesson"
-                          >
-                            T1
-                          </div>
                         <button 
                           onClick={() => onStartLessonLevel && onStartLessonLevel(selectedLessonData.id)}
                           className="px-6 py-2 bg-green-600 hover:bg-green-500 rounded-lg flex items-center font-medium"
@@ -1935,8 +2640,7 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                 <div className="w-16 h-16 mb-2 grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300">
                   <span dangerouslySetInnerHTML={{ __html: badge.svg }} />
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <svg width="48" height="48" className="absolute"><circle cx="24" cy="24" r="22" fill="rgba(0,0,0,0.3)" /></svg>
-                    <svg width="24" height="24" className="text-gray-400"><g><circle cx="12" cy="12" r="12" fill="rgba(0,0,0,0.5)" /><text x="12" y="18" text-anchor="middle" font-size="18" fill="#fff" font-family="Arial">🔒</text></g></svg>
+                    <div className="text-2xl">🔒</div>
                   </div>
                 </div>
                 <div className="font-semibold text-gray-200 text-sm mb-1">{badge.name}</div>

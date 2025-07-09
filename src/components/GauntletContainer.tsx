@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import CharacterSelect from './CharacterSelect';
 import { GauntletLevelSelector } from './GauntletLevelSelector';
 import { GauntletGame } from './GauntletGame';
-import { LevelConfig } from '../types/gauntlet';
+import { LevelConfig } from '../types/XCodeLevelTypes';
 import { supabase } from '../lib/supabase';
 import babylonTestLevel from '../maps/babylonTestLevel'; // Using as a placeholder until we have real levels
 

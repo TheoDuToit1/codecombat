@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { Heart, Star, Key, Trophy, Target, Clock, Skull, Pizza } from 'lucide-react';
 import { MinimapOverlay } from './MinimapOverlay';
-import { LevelConfig } from '../types/gauntlet';
+import { LevelConfig } from '../types/XCodeLevelTypes';
 import { Position } from '../types/game';
 
 interface GauntletGameHUDProps {

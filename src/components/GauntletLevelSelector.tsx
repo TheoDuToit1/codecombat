@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, ChevronLeft, ChevronRight, Star, Trophy, Gamepad2 } from 'lucide-react';
-import { LevelConfig } from '../types/gauntlet';
+import { LevelConfig } from '../types/XCodeLevelTypes';
 import { useNavigate } from 'react-router-dom';
 
 interface GauntletLevelSelectorProps {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, ArrowRight, Star, Trophy, Zap, Puzzle, Skull, Clock } from 'lucide-react';
-import { LevelConfig } from '../types/gauntlet';
+import { LevelConfig } from '../types/XCodeLevelTypes';
 
 interface GauntletLevelCarouselProps {
   onSelectLevel: (levelId: string) => void;

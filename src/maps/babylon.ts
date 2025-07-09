@@ -1,4 +1,4 @@
-import { LevelConfig } from '../types/gauntlet';
+import { LevelConfig } from '../types/XCodeLevelTypes';
 
 const babylon: LevelConfig = {
   id: 'babylon-test-map',

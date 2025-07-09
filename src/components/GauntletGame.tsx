@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { GauntletGameHUD } from './GauntletGameHUD';
 import { GameGrid } from './GameGrid';
-import { LevelConfig } from '../types/gauntlet';
+import { LevelConfig } from '../types/XCodeLevelTypes';
 import { ArrowLeft } from 'lucide-react';
 import { getCharacterAnimationsByClass } from '../utils/characterAnimationSaver';
 import { adaptSupabaseAnimation } from '../utils/animationAdapter';
