@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Sword, Zap, Wand2, Target, Crown, Star, BookOpen, Users, Trophy, Lock } from 'lucide-react';
-import { XCODE_CREW, COURSE_STRUCTURE, GAUNTLET_STRUCTURE, CrewMember } from '../data/story';
+import { XCODE_CREW, COURSE_STRUCTURE, CrewMember } from '../data/story';
 
 interface CrewIntroductionProps {
   isOpen: boolean;

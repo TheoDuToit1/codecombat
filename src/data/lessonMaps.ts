@@ -24,9 +24,4 @@ export const LESSON_MAPS: Record<number, LevelConfig> = {
 // Helper function to get lesson map by ID
 export const getLessonMap = (lessonId: number): LevelConfig | null => {
   return LESSON_MAPS[lessonId] || null;
-};
-
-// Helper function to get lesson map with fallback to babylon
-export const getLessonMapWithFallback = (lessonId: number, fallbackMap: LevelConfig): LevelConfig => {
-  return LESSON_MAPS[lessonId] || fallbackMap;
 }; 

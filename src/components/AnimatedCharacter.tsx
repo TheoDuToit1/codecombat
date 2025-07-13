@@ -106,9 +106,23 @@ export const AnimatedCharacter: React.FC<AnimatedCharacterProps> = ({
       const dirKey = direction ? direction.toLowerCase() : 'down';
       
       if (sprites[stateKey][dirKey]) {
-        const frames = sprites[stateKey][dirKey];
-        if (frames && Array.isArray(frames) && frames.length > 0) {
+        const framesData = sprites[stateKey][dirKey];
+        
+        // Handle both array of strings and SpriteAnimation objects
+        let frames: string[] = [];
+        if (Array.isArray(framesData)) {
+          frames = framesData;
+        } else if (framesData.frames && Array.isArray(framesData.frames)) {
+          frames = framesData.frames;
+        }
+        
+        if (frames && frames.length > 0) {
           const frameUrl = frames[frame % frames.length];
+          
+          // Debug log to see what URL we're getting
+          if (debug) {
+            console.log("Using frame URL:", frameUrl);
+          }
           
           return (
             <div className="w-full h-full flex items-center justify-center" style={{ background: 'none', ...style }}>
@@ -117,7 +131,15 @@ export const AnimatedCharacter: React.FC<AnimatedCharacterProps> = ({
                 alt={`Character ${state} ${direction}`}
                 className="max-h-full max-w-full object-contain"
                 style={{ imageRendering: 'pixelated', width: size, height: size }}
+                onError={(e) => {
+                  console.error('Failed to load image:', frameUrl, e);
+                }}
               />
+              {debug && (
+                <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1">
+                  {frameUrl}
+                </div>
+              )}
             </div>
           );
         }
@@ -127,10 +149,23 @@ export const AnimatedCharacter: React.FC<AnimatedCharacterProps> = ({
       const availableDirections = Object.keys(sprites[stateKey]);
       if (availableDirections.length > 0) {
         const fallbackDirection = availableDirections[0];
-        const frames = sprites[stateKey][fallbackDirection];
+        const framesData = sprites[stateKey][fallbackDirection];
         
-        if (frames && Array.isArray(frames) && frames.length > 0) {
-          const frameUrl = frames[frame % frames.length];
+        // Handle both array of strings and SpriteAnimation objects
+        let frames: string[] = [];
+        if (Array.isArray(framesData)) {
+          frames = framesData;
+        } else if (framesData.frames && Array.isArray(framesData.frames)) {
+          frames = framesData.frames;
+        }
+        
+        if (frames && frames.length > 0) {
+          const originalFrameUrl = frames[frame % frames.length];
+          // Fix image URL if needed
+          let frameUrl = originalFrameUrl;
+          if (frameUrl.startsWith('/public/')) {
+            frameUrl = frameUrl.replace('/public/', '/');
+          }
           
           return (
             <div className="w-full h-full flex items-center justify-center" style={{ background: 'none', ...style }}>
@@ -139,7 +174,15 @@ export const AnimatedCharacter: React.FC<AnimatedCharacterProps> = ({
                 alt={`Character ${state} ${fallbackDirection}`}
                 className="max-h-full max-w-full object-contain"
                 style={{ imageRendering: 'pixelated', width: size, height: size }}
+                onError={(e) => {
+                  console.error('Failed to load fallback image:', frameUrl, e);
+                }}
               />
+              {debug && (
+                <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1">
+                  {frameUrl}
+                </div>
+              )}
             </div>
           );
         }
@@ -154,10 +197,23 @@ export const AnimatedCharacter: React.FC<AnimatedCharacterProps> = ({
       
       if (availableDirections.length > 0) {
         const fallbackDirection = availableDirections[0];
-        const frames = sprites[fallbackState][fallbackDirection];
+        const framesData = sprites[fallbackState][fallbackDirection];
         
-        if (frames && Array.isArray(frames) && frames.length > 0) {
-          const frameUrl = frames[frame % frames.length];
+        // Handle both array of strings and SpriteAnimation objects
+        let frames: string[] = [];
+        if (Array.isArray(framesData)) {
+          frames = framesData;
+        } else if (framesData.frames && Array.isArray(framesData.frames)) {
+          frames = framesData.frames;
+        }
+        
+        if (frames && frames.length > 0) {
+          const originalFrameUrl = frames[frame % frames.length];
+          // Fix image URL if needed
+          let frameUrl = originalFrameUrl;
+          if (frameUrl.startsWith('/public/')) {
+            frameUrl = frameUrl.replace('/public/', '/');
+          }
           
           return (
             <div className="w-full h-full flex items-center justify-center" style={{ background: 'none', ...style }}>
@@ -166,7 +222,15 @@ export const AnimatedCharacter: React.FC<AnimatedCharacterProps> = ({
                 alt={`Character ${fallbackState} ${fallbackDirection}`}
                 className="max-h-full max-w-full object-contain"
                 style={{ imageRendering: 'pixelated', width: size, height: size }}
+                onError={(e) => {
+                  console.error('Failed to load state fallback image:', frameUrl, e);
+                }}
               />
+              {debug && (
+                <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1">
+                  {frameUrl}
+                </div>
+              )}
             </div>
           );
         }

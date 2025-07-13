@@ -117,53 +117,6 @@ export const COURSE_STRUCTURE = {
   }
 };
 
-// Gauntlet Game: 100 Level Playground (Unlocked after lessons)
-export interface GauntletLevel {
-  id: number;
-  name: string;
-  type: 'combat' | 'puzzle' | 'treasure' | 'boss';
-  difficulty: number; // 1-10
-  requiredSkills: string[];
-  rewards: {
-    gold: number;
-    gems: number;
-    items?: string[];
-  };
-}
-
-export const GAUNTLET_STRUCTURE = {
-  name: "The Great Gauntlet",
-  description: "100 epic levels of coding adventure!",
-  unlockRequirement: "Complete CS1 (40 lessons)",
-  totalLevels: 100,
-  floors: [
-    {
-      name: "Dungeon Depths",
-      levels: "1-25",
-      theme: "Basic coding challenges",
-      boss: "Shadow Coder"
-    },
-    {
-      name: "Crystal Caverns", 
-      levels: "26-50",
-      theme: "Loop and function puzzles",
-      boss: "Loop Dragon"
-    },
-    {
-      name: "Logic Labyrinth",
-      levels: "51-75", 
-      theme: "Complex decision making",
-      boss: "Logic Sphinx"
-    },
-    {
-      name: "Master's Tower",
-      levels: "76-100",
-      theme: "Ultimate coding challenges", 
-      boss: "Code Master Supreme"
-    }
-  ]
-};
-
 export const PROGRESSION_SYSTEM = {
   lessons: {
     total: 160,

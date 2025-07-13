@@ -159,7 +159,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
         {/* Monaco Editor */}
         <Editor
           height="100%"
-          defaultLanguage="javascript"
+          defaultLanguage="python"
           theme="vs-dark"
           value={code}
           onChange={(value) => onChange(value || '')}
@@ -197,7 +197,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
         )}
         
         {/* CSS animations */}
-        <style jsx>{`
+        <style>{`
           @keyframes pulse-line {
             from { background-color: rgba(255, 215, 0, 0.25); }
             to { background-color: rgba(255, 215, 0, 0.45); }
@@ -240,10 +240,8 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
           </div>
           <div className="text-gray-400 text-sm">
             {isRunning ? (
-              <span className="text-yellow-400">⚡ Code executing</span>
-            ) : (
-              <>Press <kbd className="bg-gray-700 px-2 py-1 rounded text-xs">Ctrl+Enter</kbd> to run</>
-            )}
+              <span>Executing...</span>
+            ) : null}
           </div>
         </div>
       </div>

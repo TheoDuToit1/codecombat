@@ -6,7 +6,6 @@ import { ArrowLeft } from "lucide-react";
 import CharacterAnimationWorkshop from '../components/CharacterAnimationWorkshop';
 import FrameEditorModal from '../components/FrameEditorModal';
 import { SPRITE_CATEGORIES, saveSpriteSheet } from '../utils/spriteSheetSaver';
-import GauntletSpriteManager from '../components/GauntletSpriteManager';
 
 export default function AssetWorkshop({ onBack }: { onBack: () => void }) {
   const [behaviorCode, setBehaviorCode] = useState("// Example: moveToward(hero.position)");
@@ -43,7 +42,6 @@ export default function AssetWorkshop({ onBack }: { onBack: () => void }) {
 
   const [spriteSheetModalOpen, setSpriteSheetModalOpen] = useState(false);
   const [sheetFrames, setSheetFrames] = useState<string[]>([]);
-  const [showGauntletManager, setShowGauntletManager] = useState(false);
 
   const resetForm = () => {
     setBehaviorCode("// Example: moveToward(hero.position)");
@@ -230,18 +228,6 @@ export default function AssetWorkshop({ onBack }: { onBack: () => void }) {
                   </svg>
                   Save to Database
                 </button>
-                
-                <button
-                  className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-2 rounded-lg shadow-lg flex items-center gap-2"
-                  onClick={() => setShowGauntletManager(true)}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 3h18v18H3z"></path>
-                    <path d="M12 8v8"></path>
-                    <path d="M8 12h8"></path>
-                  </svg>
-                  Save as Gauntlet Object
-                </button>
               </div>
             )}
           </div>
@@ -420,18 +406,6 @@ export default function AssetWorkshop({ onBack }: { onBack: () => void }) {
         onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
         type={confirmDialog.type}
       />
-      
-      {/* Gauntlet Sprite Manager Modal */}
-      {showGauntletManager && (
-        <GauntletSpriteManager
-          frames={sheetFrames}
-          onClose={() => setShowGauntletManager(false)}
-          onSaved={() => {
-            setShowGauntletManager(false);
-            setErrorMessage('Gauntlet object saved successfully!');
-          }}
-        />
-      )}
     </div>
   );
 } 

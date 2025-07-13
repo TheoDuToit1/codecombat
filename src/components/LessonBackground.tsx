@@ -69,6 +69,19 @@ export const LessonBackground: React.FC<LessonBackgroundProps> = ({ lessonNumber
       />
     );
   }
+  
+  // For lesson 9, use the im5.jpg image
+  if (lessonNumber === 9) {
+    return (
+      <div 
+        style={{
+          ...backgroundStyles,
+          backgroundImage: `url(/images/im5.jpg)`,
+          filter: 'brightness(0.95) saturate(1.05)',
+        }}
+      />
+    );
+  }
 
   // For other lessons, use a gradient background
   return (

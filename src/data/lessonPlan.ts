@@ -1,6 +1,5 @@
 // 🎮 X-Code Crew Academy: Complete 160 Lesson Plan
 // Structure: 4 Courses × 40 Lessons Each = 160 Total Lessons
-// Unlocks: 100 Level Gauntlet after completing CS1 (40 lessons)
 
 export interface Lesson {
   id: number;
@@ -615,19 +614,11 @@ export const ACHIEVEMENTS: Achievement[] = [
   }
 ];
 
-// 🎮 GAUNTLET INTEGRATION
-export const GAUNTLET_UNLOCK_REQUIREMENTS = {
-  minimumLessons: 40, // Must complete CS1
-  requiredConcepts: ['Variables', 'Loops', 'Conditions', 'Functions'],
-  mentorRequired: 'Sage' // Must have trained with Sage
-};
-
 export const LESSON_PLAN_SUMMARY = {
   totalLessons: 160,
   courses: 4,
   mentors: 4,
   concepts: 20,
   estimatedHours: 80, // 30 minutes average per lesson
-  gauntletUnlock: 40, // After CS1 completion
   structure: '4 courses × 40 lessons = 160 total lessons'
 };

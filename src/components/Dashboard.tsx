@@ -34,8 +34,6 @@ import { ProgressService } from '../services/ProgressService';
 interface DashboardProps {
   onNavigate?: (view: 
     | 'dashboard' 
-    | 'gauntlet-selection' 
-    | 'gauntlet-arcade' 
     | 'babylon-viewport' 
     | 'babylon-topdown' 
     | 'asset-workshop' 
@@ -55,7 +53,6 @@ interface DashboardProps {
   crewMembers?: CrewMember[];
   selectedCrewMember?: CrewMember | null;
   onStartGame?: () => void;
-  onStartGauntlet?: () => void;
   onShowCrewIntro?: () => void;
   onShowLessonPlan?: () => void;
 }
@@ -66,7 +63,6 @@ const Dashboard: React.FC<DashboardProps> = ({
   crewMembers = [],
   selectedCrewMember,
   onStartGame,
-  onStartGauntlet,
   onShowCrewIntro,
   onShowLessonPlan
 }) => {

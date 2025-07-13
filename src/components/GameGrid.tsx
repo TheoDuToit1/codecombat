@@ -1,10 +1,19 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useImperativeHandle, forwardRef } from 'react';
 import { MinimapOverlay } from './MinimapOverlay';
-import { LevelConfig } from '../types/gauntlet';
-import babylonTestLevel from '../maps/babylonTestLevel';
 import { AnimatedCharacter } from './AnimatedCharacter';
 import { listAnimations } from '../utils/supabaseAnimationSaver';
-import { fetchGauntletObjects } from '../lib/supabase';
+
+// Create a default empty level for XCodeAcademy
+const defaultXCodeLevel: LevelConfig = {
+  id: 'default',
+  name: 'Default XCode Level',
+  description: 'Default level for XCode Academy',
+  playerStart: { x: 5, y: 5 },
+  gridSize: { width: 15, height: 15 },
+  tiles: Array(15).fill(Array(15).fill('FL')), // 15x15 grid of floor tiles
+  collectibles: { gems: 0 },
+  timeLimit: 0
+};
 
 const PLAYER_SPEED = 3; // Pixels per frame for smooth movement
 
@@ -29,35 +38,6 @@ const TILE_EMOJIS: Record<string, string> = {
   chest_blue_gold: '🎁', // Placeholder for blue-gold chest
 };
 
-// Mapping for gauntlet level editor codes
-const GAUNTLET_TILE_MAP: Record<string, string> = {
-  'WA': 'wall',   // Wall (standard)
-  'W1': 'wall',   // Wall variant 1
-  'W2': 'wall',   // Wall variant 2
-  'FL': 'FL',  // Floor (use asset if available)
-  'PT': 'trap',   // Pit/hole
-  'LT': 'wall_lt',   // Top-left corner
-  'RT': 'wall_rt',   // Top-right corner
-  'LB': 'wall_lb',   // Bottom-left corner
-  'RB': 'wall_rb',   // Bottom-right corner
-  'L1': 'enemy',  // Lizard (basic)
-  'L2': 'enemy',  // Poison Lizard
-  'F1': 'enemy',  // Fire Fox
-  'F2': 'enemy',  // Ice Fox
-  'M1': 'enemy',  // Mimic Chest
-  'D1': 'enemy',  // Mini Dragon
-  'GE': 'gem',    // Gem
-  'GO': 'chest_silver', // Gold
-  'KE': 'key',    // Key
-  'FO': 'food',   // Food
-  'PO': 'potion', // Potion
-  'CH': 'chest_blue', // Chest
-  'EN': 'entrance', // Entrance - Player spawn point
-  'EX': 'exit',   // Exit
-  'DO': 'door',   // Door
-  'EM': 'empty',  // Empty
-};
-
 // Viewport settings
 const VIEW_RADIUS = 4; // Number of tiles in each direction around player
 const FIXED_TILE_SIZE = 32; // Use fixed tile size for more stability
@@ -74,6 +54,7 @@ interface GameGridProps {
   sprites?: any;
   characterName?: string;
   initialPosition?: { x: number, y: number };
+  onTileImagesLoaded?: (images: Record<string, string>) => void;
 }
 
 const getTileSize = (level: LevelConfig, zoomLevel = 1) => {
@@ -86,18 +67,22 @@ function isBlockingTile(code: string) {
   return code.startsWith('W') || ['LT', 'RT', 'LB', 'RB'].includes(code);
 }
 
-export const GameGrid: React.FC<GameGridProps> = ({ 
-  level = babylonTestLevel,
-  viewMode = 'viewport',
-  zoomLevel = 1,
-  onMove,
-  onCollectItem,
-  showMinimap = true,
-  character,
-  characterName,
-  sprites,
-  onTileImagesLoaded
-}) => {
+export interface GameGridHandle {
+  movePlayerSmoothly: (direction: 'up' | 'down' | 'left' | 'right', steps?: number) => Promise<void>;
+}
+
+export const GameGrid = forwardRef<GameGridHandle, GameGridProps>((props, ref) => {
+  // Use props directly
+  const level = props.level || defaultXCodeLevel;
+  const viewMode = props.viewMode || 'viewport';
+  const zoomLevel = props.zoomLevel || 1;
+  const onMove = props.onMove;
+  const onCollectItem = props.onCollectItem;
+  const showMinimap = props.showMinimap !== undefined ? props.showMinimap : true;
+  const character = props.character;
+  const sprites = props.sprites;
+  const onTileImagesLoaded = props.onTileImagesLoaded;
+  
   // Process the level data for custom grid format
   const processGridData = (levelData: LevelConfig) => {
     // Find EN tile and set player start position
@@ -121,7 +106,7 @@ export const GameGrid: React.FC<GameGridProps> = ({
         for (let x = 0; x < levelData.tiles[y].length; x++) {
           const code = levelData.tiles[y][x];
           const tileType = typeof code === 'string'
-            ? (GAUNTLET_TILE_MAP[code] || code)
+            ? (code)
             : (code as string);
             row.push(tileType);
         }
@@ -144,24 +129,28 @@ export const GameGrid: React.FC<GameGridProps> = ({
   const [viewportOffset, setViewportOffset] = useState({ x: 0, y: 0 });
   const [hasKey, setHasKey] = useState(false);
   const [gemsCollected, setGemsCollected] = useState(0);
-  const [moveCount, setMoveCount] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [win, setWin] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
   const [wallOpened, setWallOpened] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('');
   const gameContainerRef = useRef<HTMLDivElement>(null);
   
   // Use a ref to track last move time to prevent duplicate moves
   const lastMoveTime = useRef(0);
   const MOVE_DELAY = 150; // 150ms delay between moves
   
+  // Add state for status messages
+  const [statusMessage, setStatusMessage] = useState<string>('');
+  
+  // Add move counter
+  const [moveCount, setMoveCount] = useState(0);
+  
   // Get total gems from level config safely
   const totalGems = level.collectibles?.gems || 0;
 
   // Add a state to track the player's direction
-  const [playerDirection, setPlayerDirection] = useState<'down' | 'left' | 'right' | 'up'>('down');
-
+  const [playerAnimState, setPlayerAnimState] = useState<'idle' | 'walk'>('idle');
+  const [playerAnimDirection, setPlayerAnimDirection] = useState<'up' | 'down' | 'left' | 'right'>('down');
+  
   // Chest animation state
   const [chestAnimations, setChestAnimations] = useState<Record<string, string[]>>({});
   const [chestFrameIndices, setChestFrameIndices] = useState<Record<string, number>>({});
@@ -176,17 +165,10 @@ export const GameGrid: React.FC<GameGridProps> = ({
   );
   // Track pressed movement keys for smooth, responsive movement
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
-
-  // Animation state for the player
-  const [playerAnimState, setPlayerAnimState] = useState<'idle' | 'walk'>('idle');
-  const [playerAnimDirection, setPlayerAnimDirection] = useState<'up' | 'down' | 'left' | 'right'>('down');
-  
-  // Keep track of whether the player character is rendered to prevent duplicates
-  const [playerCharacterRendered, setPlayerCharacterRendered] = useState(false);
   
   // Force playerCharacterRendered to false for debugging
   useEffect(() => {
-    setPlayerCharacterRendered(false);
+    // setPlayerCharacterRendered(false); // This line was removed
   }, []);
 
   // Function to render directional arrows with the correct size
@@ -306,7 +288,7 @@ export const GameGrid: React.FC<GameGridProps> = ({
         
         if (chestMap['chest_blue_gold'].length === 0) {
           // Blue gold chest - gold/yellow color
-          chestMap['chest_blue_gold'] = ['data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABuklEQVR42u2XvUrEQBDHc7mLjWBjYWNjY2FjYWNjY2Fj4SNY+AQ+goWFhYWFhYWP4CNYWFhYWFhYWFj4CDaCzZ3/SSYQQrK7SU69awZ+ySbZnf12djabXC6TyfQ/FQCKAHWADsAI4BngDeAT4AfgG+AF4B6gD1AFyIdxcgA1gC7AFOAVYBVBM4ARQBugDFAIC14EKAMMAh5ZwONoATADaACUbMBLAA2AU0fgdbQEuACoZXmgAnDsGF5HxwC1LPAGwJ5j8B89ANSzwAfqt4hES4CKDl4BuIwQXtcNQEkHPwCYRwz/qyuAHR18BPDtAHzmCf4bYKSD9wDeHYC/A3Q9wb8DdHXwJsCDA/A3gKYn+E+Ahg5eAjh1AP4KUPcE/wpQ08G3AMYO4GcAVV/wTwAVHTwLcBADvD4Uszq4WsUGEcPrQ7mfBa8D3EQEfg1QywJXroRt8IsAO1ngRYBhRPAqpopZ4FmAEsB1BPADgKILeHXAVAEOPMEPAPZMh5LNAzmABsDEE/gEoK7iWcHVPFMDOAF4zoCqv6f/VQE4AijbwGcymUy/oF+zj8IPL2PXOAAAAABJRU5ErkJggg=='];
+          chestMap['chest_blue_gold'] = ['data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABuklEQVR42u2XvUrEQBDHc7mLjWBjYWNjY2FjYWNjY2Fj4SNY+AQ+goWFhYWFhYWP4CNYWFhYWFhYWFj4CDaCzZ3/SSYQQrK7SU69awZ+ySbZnf12djabXC6TyfQ/FQCKAHWADsAI4BngDeAT4AfgG+AF4B6gD1AFyIdxcgA1gC7AFOAVYBVBM4ARQBugDFAIC14EKAMMAh5ZwONoATADaACUbMBLAA2AU0fgdbQEuACoZXmgAnDsGF5HxwC1LPAGwJ5j8B89ANSzwAfqt4hES4CKDl4BuIwQXtcNQEkHPwCYRwz/qyuAHR18BPDtAHzmCf4bYKSD9wDeHYC/A3Q9wb8DdHXwJsCDA/A3gKYn+E+Ahg5eAjh1AP4K0PcE/wpQ08G3AMYO4GcAVV/wTwAVHTwLcBADvD4Uszq4WsUGEcPrQ7mfBa8D3EQEfg1QywJXroRt8IsAO1ngRYBhRPAqpopZ4FmAEsB1BPADgKILeHXAVAEOPMEPAPZMh5LNAzmABsDEE/gEoK7iWcHVPFMDOAF4zoCqv6f/VQE4AijbwGcymUy/oF+zj8IPL2PXOAAAAABJRU5ErkJggg=='];
         }
         
       if (isMounted) setChestAnimations(chestMap);
@@ -458,7 +440,7 @@ export const GameGrid: React.FC<GameGridProps> = ({
   }, [hasKey, gemsCollected, totalGems]);
 
   // For smoother movement
-    let animationFrameId: number;
+    let animationFrameId = useRef<number | null>(null);
   
   // Game loop for smooth movement
   useEffect(() => {
@@ -534,16 +516,16 @@ export const GameGrid: React.FC<GameGridProps> = ({
         }
       }
       
-      animationFrameId = requestAnimationFrame(gameLoop);
+      animationFrameId.current = requestAnimationFrame(gameLoop);
     }
     
     // Start the game loop
-    animationFrameId = requestAnimationFrame(gameLoop);
+    animationFrameId.current = requestAnimationFrame(gameLoop);
     
     // Cleanup on unmount
     return () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
+      if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
       }
     };
   }, [pressedKeys, playerPixelPos, tileSize, tiles, playerPos, playerAnimDirection, gameOver, win]);
@@ -723,6 +705,95 @@ export const GameGrid: React.FC<GameGridProps> = ({
     }
   }, [level, tileSize]);
 
+  // Add enemy state
+  const [enemies, setEnemies] = useState<{id: string, position: {x: number, y: number}, direction: 'up' | 'down' | 'left' | 'right'}[]>([]);
+
+  // Initialize enemies from level configuration or use default enemy for backward compatibility
+  useEffect(() => {
+    // Check if level has enemies defined
+    console.log('Level config:', level);
+    console.log('Enemies in level config:', level.enemies);
+    
+    if (level.enemies && level.enemies.positions && level.enemies.positions.length > 0) {
+      // Create enemies from level configuration
+      const levelEnemies = level.enemies.positions.map((pos, index) => ({
+        id: `enemy-${index}`,
+        position: { x: pos.x, y: pos.y },
+        direction: 'down' as 'up' | 'down' | 'left' | 'right'
+      }));
+      console.log('Initialized enemies from level config:', levelEnemies);
+      setEnemies(levelEnemies);
+    } else {
+      // Fallback to single default enemy for backward compatibility
+      const defaultEnemy = [{ 
+        id: 'default-enemy',
+        position: { x: 7, y: 5 },
+        direction: 'down'
+      }];
+      console.log('Using default enemy:', defaultEnemy);
+      setEnemies(defaultEnemy);
+    }
+  }, [level]);
+
+  // Add enemy detection and movement logic
+  useEffect(() => {
+    if (gameOver || win) return;
+    
+    // Check if player is within line of sight of an enemy (horizontal or vertical only)
+    const isInLineOfSight = (enemyPos: {x: number, y: number}) => {
+      // Check if player is in the same row or column
+      const sameRow = playerPos.y === enemyPos.y;
+      const sameColumn = playerPos.x === enemyPos.x;
+      
+      // Check if distance is within detection range (3 tiles)
+      const distance = Math.abs(playerPos.x - enemyPos.x) + Math.abs(playerPos.y - enemyPos.y);
+      
+      return (sameRow || sameColumn) && distance <= 3;
+    };
+    
+    // Move enemy toward player if in line of sight
+    const moveEnemyTowardPlayer = () => {
+      setEnemies(currentEnemies => {
+        return currentEnemies.map(enemy => {
+          if (!isInLineOfSight(enemy.position)) return enemy;
+          
+          // Determine direction to move (prefer horizontal movement first)
+          let newEnemyPos = { ...enemy.position };
+          let newDirection = enemy.direction;
+          
+          if (playerPos.x !== enemy.position.x) {
+            // Move horizontally
+            newEnemyPos.x += playerPos.x > enemy.position.x ? 1 : -1;
+            newDirection = playerPos.x > enemy.position.x ? 'right' : 'left';
+          } else if (playerPos.y !== enemy.position.y) {
+            // Move vertically
+            newEnemyPos.y += playerPos.y > enemy.position.y ? 1 : -1;
+            newDirection = playerPos.y > enemy.position.y ? 'down' : 'up';
+          }
+          
+          // Check if the new position is valid (not a wall)
+          const targetTile = tiles[newEnemyPos.y]?.[newEnemyPos.x];
+          if (targetTile && !isBlockingTile(targetTile)) {
+            return {
+              ...enemy,
+              position: newEnemyPos,
+              direction: newDirection
+            };
+          }
+          
+          return enemy;
+        });
+      });
+    };
+    
+    // Move enemies every second if in line of sight
+    const enemyInterval = setInterval(() => {
+      moveEnemyTowardPlayer();
+    }, 1000);
+    
+    return () => clearInterval(enemyInterval);
+  }, [playerPos, enemies, tiles, gameOver, win]);
+
   const collectGem = (x: number, y: number) => {
     setGemsCollected(prev => prev + 1);
     const newTiles = [...tiles];
@@ -818,11 +889,11 @@ export const GameGrid: React.FC<GameGridProps> = ({
   };
 
   const handleFocus = () => {
-    setIsFocused(true);
+    // setIsFocused(true); // This line was removed
   };
 
   const handleBlur = () => {
-    setIsFocused(false);
+    // setIsFocused(false); // This line was removed
   };
 
   // Calculate dynamic sizing for topdown view (move this to top level)
@@ -921,21 +992,29 @@ export const GameGrid: React.FC<GameGridProps> = ({
             />
           </div>
         )}
-        {/* Spike Trap Overlay for Lesson 9 at (6,5) */}
-        {level.lessonNumber === 9 && (
-          <img
-            src={require('../../public/images/Spike_Trap.webp')}
-            alt="spike-trap"
+        {/* Enemy Characters - absolutely positioned above the grid */}
+        {console.log('Rendering enemies:', enemies)}
+        {enemies.map(enemy => (
+          <div
+            key={enemy.id}
             style={{
               position: 'absolute',
-              left: 6 * tileSize,
-              top: 5 * tileSize,
+              left: enemy.position.x * tileSize,
+              top: enemy.position.y * tileSize,
               width: tileSize,
               height: tileSize,
-              zIndex: 500
+              backgroundColor: 'rgba(255, 0, 0, 0.7)',
+              borderRadius: '4px',
+              zIndex: 900,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
-          />
-        )}
+          >
+            <div style={{ color: 'white', fontSize: '20px' }}>👹</div>
+          </div>
+        ))}
+        {/* Remove spike trap overlay for lesson 9 */}
         <div 
           className="grid-scaling-container"
           style={{
@@ -1046,6 +1125,43 @@ export const GameGrid: React.FC<GameGridProps> = ({
     );
   };
 
+  // Smooth movement API for parent
+  useImperativeHandle(ref, () => ({
+    movePlayerSmoothly: async (direction: 'up' | 'down' | 'left' | 'right', steps: number = 1) => {
+      for (let i = 0; i < steps; i++) {
+        await new Promise<void>(resolve => {
+          const start = { ...playerPixelPos };
+          const end = { ...start };
+          switch (direction) {
+            case 'up': end.y -= tileSize; break;
+            case 'down': end.y += tileSize; break;
+            case 'left': end.x -= tileSize; break;
+            case 'right': end.x += tileSize; break;
+          }
+          const duration = 300; // ms
+          const startTime = performance.now();
+          function animate(now: number) {
+            const elapsed = now - startTime;
+            const t = Math.min(1, elapsed / duration);
+            setPlayerPixelPos({
+              x: start.x + (end.x - start.x) * t,
+              y: start.y + (end.y - start.y) * t
+            });
+            if (t < 1) {
+              requestAnimationFrame(animate);
+            } else {
+              setPlayerPixelPos(end);
+              // Update grid position for highlight
+              setPlayerPos({ x: Math.round(end.x / tileSize), y: Math.round(end.y / tileSize) });
+              resolve();
+            }
+          }
+          requestAnimationFrame(animate);
+        });
+      }
+    }
+  }), [playerPixelPos, tileSize]);
+
   return (
     <div 
       className="relative w-full h-full"
@@ -1060,4 +1176,4 @@ export const GameGrid: React.FC<GameGridProps> = ({
       {showMinimap && zoomed && <MinimapOverlay level={level} playerPos={playerPos} />}
     </div>
   );
-};
+});

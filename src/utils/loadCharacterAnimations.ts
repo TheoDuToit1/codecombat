@@ -1,4 +1,4 @@
-import { SpriteAnimation, SpriteDirection } from '../types/game';
+import { SpriteAnimation } from '../types/game';
 
 export type AnimationType = 'idle' | 'walk' | 'attack' | 'death';
 export type Direction = 'down' | 'left' | 'right' | 'up';
@@ -106,18 +106,63 @@ function getFrameUrls(characterClass: CharacterClass, animType: AnimationType, d
     .map(([, url]) => url);
 }
 
-export function loadCharacterAnimations(characterClass: CharacterClass): Record<string, SpriteAnimation> {
+// Static mapping for all decoy (assasin-wolf) animation/direction pairs
+const decoyFrameGlobs: { [key: string]: Record<string, unknown> } = {
+  idle_down: import.meta.glob('/public/assets/characters/assasin-wolf/Idle_Down/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+  idle_left: import.meta.glob('/public/assets/characters/assasin-wolf/Idle_Left/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+  idle_right: import.meta.glob('/public/assets/characters/assasin-wolf/Idle_Right/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+  idle_up: import.meta.glob('/public/assets/characters/assasin-wolf/Idle_Up/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+  walk_down: import.meta.glob('/public/assets/characters/assasin-wolf/Walk_Down/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+  walk_left: import.meta.glob('/public/assets/characters/assasin-wolf/Walk_Left/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+  walk_right: import.meta.glob('/public/assets/characters/assasin-wolf/Walk_Right/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+  walk_up: import.meta.glob('/public/assets/characters/assasin-wolf/Walk_Up/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+  attack_down: import.meta.glob('/public/assets/characters/assasin-wolf/Swing_Down/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+  attack_left: import.meta.glob('/public/assets/characters/assasin-wolf/Swing_Left/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+  attack_right: import.meta.glob('/public/assets/characters/assasin-wolf/Swing_Right/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+  attack_up: import.meta.glob('/public/assets/characters/assasin-wolf/Swing_Up/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+  death_down: import.meta.glob('/public/assets/characters/assasin-wolf/Idle_Down/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+  death_left: import.meta.glob('/public/assets/characters/assasin-wolf/Idle_Left/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+  death_right: import.meta.glob('/public/assets/characters/assasin-wolf/Idle_Right/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+  death_up: import.meta.glob('/public/assets/characters/assasin-wolf/Idle_Up/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' }),
+};
+
+function getCustomDecoySpriteAnimation(animType: AnimationType, dir: Direction): SpriteAnimation {
+  const key = `${animType}_${dir}`;
+  const modules = decoyFrameGlobs[key] || {};
+  const frames = Object.entries(modules)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, url]) => {
+      // Transform URL from '/public/assets/...' to '/assets/...' format for browser access
+      const urlStr = url as string;
+      return urlStr.replace('/public/assets/', '/assets/');
+    });
+  return {
+    name: key,
+    frames,
+    settings: {
+      speed: animType === 'walk' ? 1.2 : 1, // Slightly faster animation for walking for smoother movement
+      loop: true,
+      pingPong: false,
+      reverse: false,
+    }
+  };
+}
+
+export function loadCharacterAnimations(characterClass: CharacterClass | 'assasin-wolf'): Record<string, Record<string, SpriteAnimation>> {
   const animationTypes: AnimationType[] = ['idle', 'walk', 'attack', 'death'];
   const directions: Direction[] = ['down', 'left', 'right', 'up'];
-  const animations: Record<string, SpriteAnimation> = {};
+  const animations: Record<string, Record<string, SpriteAnimation>> = {};
 
   for (const animType of animationTypes) {
     const stateKey = animType.toLowerCase();
     animations[stateKey] = {};
     for (const dir of directions) {
       const dirKey = dir.toLowerCase();
-      const urls = getFrameUrls(characterClass, animType, dir);
-      animations[stateKey][dirKey] = urls;
+      if (characterClass === 'assasin-wolf') {
+        animations[stateKey][dirKey] = getCustomDecoySpriteAnimation(animType, dir);
+      } else {
+        animations[stateKey][dirKey] = getFrameUrls(characterClass as CharacterClass, animType, dir) as unknown as SpriteAnimation;
+      }
     }
   }
 

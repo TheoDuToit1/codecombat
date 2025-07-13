@@ -294,7 +294,7 @@ export const checkLessonSuccess = async (
     return { success: false };
   }
   
-  // Fall back to hard-coded success criteria if no level config
+  // Specific lesson success checks
   switch (lessonId) {
     case 1: // Meet Your Hero
       // Success when character reaches position (6, 10) OR when the code has multiple moveUp commands
@@ -360,6 +360,14 @@ export const checkLessonSuccess = async (
           /hero\.collect\(\)/.test(code) && 
           /if\s*\(/.test(code)) {
         return { success: true, message: "🎉 Success! You've combined movement, collection, and decision-making!" };
+      }
+      break;
+      
+    // Lesson 9: Hazard Zones
+    case 9:
+      // Success if they've moved to the goal position (7, 12)
+      if (characterPosition.x === 7 && characterPosition.y === 12) {
+        return { success: true, message: "🎉 Great job! You've reached the goal!" };
       }
       break;
   }

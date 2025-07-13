@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Gamepad2, Layers, Award, Star, Map, UserX } from 'lucide-react';
 import { GauntletContainer } from './GauntletContainer';
-import BabylonViewportMode from './BabylonViewportMode';
-import { BabylonTopDownMode } from './BabylonTopDownMode';
 
 // Remove placeholder components and use the real ones
 

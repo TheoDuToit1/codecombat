@@ -1,20 +1,15 @@
 // XCodeAcademy Component
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, BookOpen, ChevronRight, Code, Star, Clock, Award, CheckCircle, Lock, Play, Presentation } from 'lucide-react';
-import { CS1_LESSONS, MENTOR_DATA, COURSE_STRUCTURE, CS1Lesson } from '../data/cs1LessonData';
-// Import the other course data for "All Courses" functionality
-import { CS2_LESSONS } from '../data/cs2LessonData';
-import { CS3_LESSONS } from '../data/cs3LessonData';
-import { CS4_LESSONS } from '../data/cs4LessonData';
+import { X_CODE_LESSONS, XCodeLesson, MENTOR_DATA, COURSE_STRUCTURE } from '../data/X_CODE_LESSONS';
 import { ProgressService } from '../services/ProgressService';
 import { CS1_QUIZZES } from '../data/cs1QuizData';
 import ReactModal from 'react-modal';
 import { CS1QuizModal } from './CS1QuizModal';
 import { ACHIEVEMENT_BADGES } from '../data/achievements';
-import { getStoryData } from '../data/lessonStory';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CodeEditor } from './CodeEditor';
-import { GameGrid } from './GameGrid';
+import { GameGrid, GameGridHandle } from './GameGrid';
 import { ExecutionLog } from './ExecutionLog';
 import { GameStats } from './GameStats';
 import { loadCharacterAnimations } from '../utils/loadCharacterAnimations';
@@ -29,6 +24,7 @@ import {
 } from '../utils/lessonController';
 // Import our lesson animations CSS
 import '../styles/lessonAnimations.css';
+import LoadingScreen from './LoadingScreen';
 
 // Add this at the top level, before any function/component usage
 const SPIKE_TRAP_POS = { x: 6, y: 5 };
@@ -278,11 +274,8 @@ const WEEK_THEMES = {
 };
 
 // Helper to determine if a lesson is CS1
-const isCS1Lesson = (lesson: any) => {
-  // If courseId exists, use it
-  if (lesson.courseId) return lesson.courseId === 'cs1';
-  // Otherwise, use mentor or week as fallback
-  return lesson.mentor?.name === 'Sage' || (lesson.week && lesson.week <= 8);
+const isCS1Lesson = (lesson: XCodeLesson | any): lesson is XCodeLesson => {
+  return lesson && typeof lesson.id === 'number' && typeof lesson.title === 'string';
 };
 
 // Simple lesson data
@@ -388,9 +381,22 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
   const [playVictorySound, setPlayVictorySound] = useState<boolean>(false);
   
   // State for character
-  const [characterPosition, setCharacterPosition] = useState({ x: 1, y: 5 });
+  const [characterPosition, setCharacterPosition] = useState(() => {
+    if (lessonIdNum === 9) {
+      return { x: 10, y: 14 };
+    }
+    return { x: 1, y: 5 };
+  });
+  const characterPositionRef = useRef(characterPosition);
+  useEffect(() => {
+    characterPositionRef.current = characterPosition;
+  }, [characterPosition]);
   const [characterDirection, setCharacterDirection] = useState<'up' | 'down' | 'left' | 'right'>('right');
   const [characterState, setCharacterState] = useState<'idle' | 'walk' | 'attack'>('idle');
+  
+  // Add isDead state for death screen
+  const [isDead, setIsDead] = useState<boolean>(false);
+  const [deathMessage, setDeathMessage] = useState<string>('');
   
   // State for goal completion
   const [completedGoals, setCompletedGoals] = useState<{[key: string]: boolean}>({});
@@ -405,6 +411,21 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
   
   // Add this near the top of the component
   const mageSprites = loadCharacterAnimations('mage');
+  const decoySprites = loadCharacterAnimations('assasin-wolf');
+  const [decoyDirection, setDecoyDirection] = useState<'up' | 'down' | 'left' | 'right'>('down');
+  const [decoyState, setDecoyState] = useState<'idle' | 'walk'>('idle');
+  const [decoyFrame, setDecoyFrame] = useState(0);
+  
+  // Add an effect to animate the decoy frames
+  useEffect(() => {
+    if (activeLessonId === 10) {
+      const frameInterval = setInterval(() => {
+        setDecoyFrame(prev => (prev + 1) % 2);
+      }, decoyState === 'idle' ? 500 : 250);
+      
+      return () => clearInterval(frameInterval);
+    }
+  }, [activeLessonId, decoyState]);
   
   // Add state to track moveUp executions for lesson 1
   const [lesson1MoveUpCount, setLesson1MoveUpCount] = useState(0);
@@ -426,6 +447,12 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
   // Add to component state:
   const [lastExecutedLine, setLastExecutedLine] = useState<number>(0);
   const [lastCodeSnapshot, setLastCodeSnapshot] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingGoals, setLoadingGoals] = useState<string[] | undefined>(undefined);
+  const [loadingBg, setLoadingBg] = useState<string | undefined>(undefined);
+  
+  const gameGridRef = useRef<GameGridHandle>(null);
   
   // Reset moveUp counter when code or lesson changes
   useEffect(() => {
@@ -452,7 +479,7 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
       setActiveLessonId(lessonIdNum);
       
       // Use our standardized lesson start handler
-      const lessonData = CS1_LESSONS.find(l => l.id === lessonIdNum) || CS1_LESSONS[0];
+      const lessonData = X_CODE_LESSONS.find(l => l.id === lessonIdNum) || X_CODE_LESSONS[0];
       onLessonStart({
         lessonId: lessonIdNum,
         lessonData,
@@ -510,7 +537,7 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
   // Effect to set code and placeholder when active lesson changes
   useEffect(() => {
     if (activeLessonId) {
-      const lessonData = CS1_LESSONS.find(l => l.id === activeLessonId);
+      const lessonData = X_CODE_LESSONS.find(l => l.id === activeLessonId);
       if (lessonData && lessonData.codeExample) {
         // Create placeholder with missing letters based on lesson number
         const placeholderCode = createPlaceholderWithMissingLetters(
@@ -540,11 +567,11 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
   }, [codeError]);
 
   // Filter lessons by week
-  const weekLessons = CS1_LESSONS.filter(lesson => lesson.week === selectedWeek);
-  const selectedLessonData = selectedLesson ? CS1_LESSONS.find(l => l.id === selectedLesson) : null;
+  const weekLessons = X_CODE_LESSONS.filter(lesson => lesson.week === selectedWeek);
+  const selectedLessonData = selectedLesson ? X_CODE_LESSONS.find(l => l.id === selectedLesson) : null;
 
   // Group lessons by week for the sidebar
-  const weekGroups = Array.from(new Set(CS1_LESSONS.map(l => l.week))).sort((a, b) => a - b);
+  const weekGroups = Array.from(new Set(X_CODE_LESSONS.map(l => l.week))).sort((a, b) => a - b);
   
   // Create difficulty stars
   const renderDifficultyStars = (difficulty: number) => {
@@ -579,12 +606,23 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
     setCurrentProgress(prev => Math.max(prev, lessonId));
   };
 
+  // Function to directly set player position
+  const setPlayerPosition = (x: number, y: number) => {
+    setCharacterPosition({ x, y });
+    console.log(`Player position set to (${x}, ${y})`);
+  };
+
   // Update the movement functions to move grid by grid
-  const moveCharacter = (direction: 'up' | 'down' | 'left' | 'right', steps: number = 1) => {
+  const moveCharacter = async (direction: 'up' | 'down' | 'left' | 'right', steps: number = 1) => {
     setCharacterDirection(direction);
     let stepsRemaining = steps;
+    return new Promise<void>(resolve => {
     const moveStep = () => {
-      if (stepsRemaining <= 0) return;
+        if (stepsRemaining <= 0) {
+          setCharacterState('idle');
+          setTimeout(resolve, 1000); // 1 second delay between commands
+          return;
+        }
       setCharacterState('walk');
       setCharacterPosition(prev => {
         let newX = prev.x;
@@ -595,130 +633,310 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
           case 'left':  newX = Math.max(0, prev.x - 1); break;
           case 'right': newX = Math.min(14, prev.x + 1); break;
         }
-        // --- OBJECT DETECTION & AUTO-AVOIDANCE FOR LESSON 9 ---
-        if (
-          activeLessonId === 9 &&
-          newX === SPIKE_TRAP_POS.x &&
-          newY === SPIKE_TRAP_POS.y
-        ) {
-          // Try to go around: prefer up, then down, then left, then right
-          // Try up
-          if (prev.y > 0 && !(prev.x === SPIKE_TRAP_POS.x && prev.y - 1 === SPIKE_TRAP_POS.y)) {
-          setExecutionLogs(logs => [
-            ...logs,
-              `<span style='color: #fbbf24;'>Avoided spike trap at (6,5) by moving up!</span>`
-            ]);
-            return { x: prev.x, y: prev.y - 1 };
-          }
-          // Try down
-          if (prev.y < 14 && !(prev.x === SPIKE_TRAP_POS.x && prev.y + 1 === SPIKE_TRAP_POS.y)) {
-            setExecutionLogs(logs => [
-              ...logs,
-              `<span style='color: #fbbf24;'>Avoided spike trap at (6,5) by moving down!</span>`
-            ]);
-            return { x: prev.x, y: prev.y + 1 };
-          }
-          // Try left
-          if (prev.x > 0 && !(prev.x - 1 === SPIKE_TRAP_POS.x && prev.y === SPIKE_TRAP_POS.y)) {
-            setExecutionLogs(logs => [
-              ...logs,
-              `<span style='color: #fbbf24;'>Avoided spike trap at (6,5) by moving left!</span>`
-            ]);
-            return { x: prev.x - 1, y: prev.y };
-          }
-          // Try right
-          if (prev.x < 14 && !(prev.x + 1 === SPIKE_TRAP_POS.x && prev.y === SPIKE_TRAP_POS.y)) {
-            setExecutionLogs(logs => [
-              ...logs,
-              `<span style='color: #fbbf24;'>Avoided spike trap at (6,5) by moving right!</span>`
-            ]);
-            return { x: prev.x + 1, y: prev.y };
-          }
-          // If all else fails, stay in place
-          setExecutionLogs(logs => [
-            ...logs,
-            `<span style='color: #f87171;'>No safe detour found! Staying in place.</span>`
-          ]);
-          return prev;
-        }
-        // --- END OBJECT DETECTION ---
-        // ... rest of your code ...
         return { x: newX, y: newY };
       });
       stepsRemaining--;
-      setTimeout(() => {
-        setCharacterState('idle');
-        if (stepsRemaining > 0) {
-          setTimeout(moveStep, 300);
-        }
-      }, 300);
+        setTimeout(moveStep, 300); // per-step animation delay
     };
     moveStep();
+    });
   };
 
   // Update the executeCode function to handle empty code
-  const executeCode = (code: string) => {
+  const executeCode = async (code: string) => {
     if (isRunning) return;
     if (!code || code.trim() === '') {
       setExecutionLogs(['<span class="zoom-effect flashing-orange-gradient">Code first!</span>']);
       setTimeout(() => { setExecutionLogs([]); }, 2000);
       setCurrentExecutingLine(-1);
+      setIsRunning(false);
       return;
     }
     setIsRunning(true);
     setExecutionLogs([]);
-    let directionsUsedThisRun = { up: false, down: false, left: false, right: false };
-    if (activeLessonId === 2) {
-      setDirectionsExecuted({ up: false, down: false, left: false, right: false });
-    }
-    // Parse code into lines (skip comments/empty)
-    const allLines = code.split('\n');
-    const lines = allLines.filter(line => line.trim() && !line.trim().startsWith('//'));
-    setCodeLines(allLines);
     setCurrentExecutingLine(-1);
+    setCodeError(null);
 
-    // Check if code above lastExecutedLine has changed
-    let incremental = true;
-    for (let i = 0; i < lastExecutedLine; i++) {
-      if (lastCodeSnapshot[i] !== allLines[i]) {
-        incremental = false;
+    // --- LEVEL 10 DECOY LOGIC ---
+    if (activeLessonId === 10) {
+      if (/hero\s*\./.test(code)) {
+        setExecutionLogs(["❌ Error: Use <b>decoy</b> instead of <b>hero</b> in this level. Example: <code>decoy.moveRight()</code>"]);
+        setCodeError("Use decoy instead of hero in this level.");
+          setIsRunning(false);
+          setCurrentExecutingLine(-1);
+          return;
+        }
+      const decoy = {
+        moveUp: async (steps = 1) => {
+          setDecoyDirection('up');
+          setDecoyState('walk');
+          let stepsRemaining = steps;
+          return new Promise<void>(resolve => {
+            const moveStep = () => {
+              if (stepsRemaining <= 0) {
+                setDecoyState('idle');
+                setTimeout(resolve, 250); // Small delay between commands
+                return;
+              }
+              setDecoyPosition(prev => ({ x: prev.x, y: Math.max(0, prev.y - 1) }));
+              stepsRemaining--;
+              setTimeout(moveStep, 250); // Faster timing for smoother animation
+            };
+            moveStep();
+          });
+        },
+        moveDown: async (steps = 1) => {
+          setDecoyDirection('down');
+          setDecoyState('walk');
+          let stepsRemaining = steps;
+          return new Promise<void>(resolve => {
+            const moveStep = () => {
+              if (stepsRemaining <= 0) {
+                setDecoyState('idle');
+                setTimeout(resolve, 250); // Small delay between commands
+                return;
+              }
+              setDecoyPosition(prev => ({ x: prev.x, y: Math.min(14, prev.y + 1) }));
+              stepsRemaining--;
+              setTimeout(moveStep, 250); // Faster timing for smoother animation
+            };
+            moveStep();
+          });
+        },
+        moveLeft: async (steps = 1) => {
+          setDecoyDirection('left');
+          setDecoyState('walk');
+          let stepsRemaining = steps;
+          return new Promise<void>(resolve => {
+            const moveStep = () => {
+              if (stepsRemaining <= 0) {
+                setDecoyState('idle');
+                setTimeout(resolve, 250); // Small delay between commands
+                return;
+              }
+              setDecoyPosition(prev => ({ x: Math.max(0, prev.x - 1), y: prev.y }));
+              stepsRemaining--;
+              setTimeout(moveStep, 250); // Faster timing for smoother animation
+            };
+            moveStep();
+          });
+        },
+        moveRight: async (steps = 1) => {
+          setDecoyDirection('right');
+          setDecoyState('walk');
+          let stepsRemaining = steps;
+          return new Promise<void>(resolve => {
+            const moveStep = () => {
+              if (stepsRemaining <= 0) {
+                setDecoyState('idle');
+                setTimeout(resolve, 250); // Small delay between commands
+                return;
+              }
+              setDecoyPosition(prev => ({ x: Math.min(14, prev.x + 1), y: prev.y }));
+              stepsRemaining--;
+              setTimeout(moveStep, 250); // Faster timing for smoother animation
+            };
+            moveStep();
+          });
+        },
+      };
+      // Automatically insert await before decoy.move* calls
+      const awaitedCode = code.replace(/(decoy\.(moveUp|moveDown|moveLeft|moveRight)\s*\([^)]*\))/g, 'await $1');
+      try {
+        setExecutionLogs(["Running your code..."]);
+        const userFunction = new Function('decoy', `return (async () => {${awaitedCode}\n})()`);
+        await userFunction(decoy);
+        setExecutionLogs(prev => [...prev, "✅ Decoy code execution completed!"]);
+        
+        // After decoy code execution, automatically move the hero
+        setExecutionLogs(prev => [...prev, "🚶 Hero is now moving automatically..."]);
+        
+        // Move up 9 times
+        setCharacterDirection('up');
+        setCharacterState('walk');
+        for (let i = 0; i < 9; i++) {
+          await new Promise(res => setTimeout(res, 300));
+          setCharacterPosition(prev => {
+            const newPos = { x: prev.x, y: Math.max(0, prev.y - 1) };
+            // Check for collision with any enemy after moving
+            if (!isDead) {
+              for (const enemy of level10EnemiesRef.current) {
+                if (
+                  Math.floor(enemy.position.x) === newPos.x &&
+                  Math.floor(enemy.position.y) === newPos.y
+                ) {
+                  setIsDead(true);
+                  setDeathMessage('You were caught by the enemy!');
+                  setIsRunning(false);
+                  break;
+                }
+              }
+            }
+            return newPos;
+          });
+          if (isDead) break;
+        }
+        if (!isDead) {
+          // Then move right 11 times
+          setCharacterDirection('right');
+          for (let i = 0; i < 11; i++) {
+            await new Promise(res => setTimeout(res, 300));
+            setCharacterPosition(prev => {
+              const newPos = { x: Math.min(14, prev.x + 1), y: prev.y };
+              // Check for collision with any enemy after moving
+              if (!isDead) {
+                for (const enemy of level10EnemiesRef.current) {
+                  if (
+                    Math.floor(enemy.position.x) === newPos.x &&
+                    Math.floor(enemy.position.y) === newPos.y
+                  ) {
+                    setIsDead(true);
+                    setDeathMessage('You were caught by the enemy!');
+                    setIsRunning(false);
         break;
       }
     }
-    let startLine = 0;
-    if (incremental) {
-      startLine = lastExecutedLine;
-    } else {
-      // If code above changed, reset from top
-      setLastExecutedLine(0);
-      setLastCodeSnapshot([]);
-      startLine = 0;
-      // Also reset character/game state here
-      resetGame();
-      // After reset, update code and state again
-      setCode(code);
-      setCodeLines(allLines);
-    }
-
-    let currentLineIndex = startLine;
-    const executeNextCommand = () => {
-      if (currentLineIndex >= lines.length) {
-        setCurrentExecutingLine(-1);
+              }
+              return newPos;
+            });
+            if (isDead) break;
+          }
+        }
+        setCharacterState('idle');
+        if (!isDead) {
+          setExecutionLogs(prev => [...prev, "✅ Hero movement completed!"]);
+          // Check if hero has reached the goal position (13,2)
+          if (characterPosition.x === 13 && characterPosition.y === 2) {
+          setIsSuccess(true);
+            setExecutionLogs(prev => [...prev, "🎉 Success! You've completed Lesson 10!"]);
+              createSuccessConfetti();
+          }
+        }
+        
+      } catch (error) {
+        setExecutionLogs([`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`]);
+        setCodeError("Code error, check and fix!");
         setIsRunning(false);
-        setLastExecutedLine(lines.length);
-        setLastCodeSnapshot([...allLines]);
+        setCurrentExecutingLine(-1);
+      } finally {
+        setIsRunning(false);
+        }
+        return;
+      }
+    // --- END LEVEL 10 DECOY LOGIC ---
+
+    // Track directions for lesson 2
+    const directionsUsedThisRun = { up: false, down: false, left: false, right: false };
+    if (activeLessonId === 2) {
+      setDirectionsExecuted({ up: false, down: false, left: false, right: false });
+    }
+    // Track character position locally to avoid React state lag
+    const localCharacterPosition = { ...characterPosition };
+    // Define the hero object as before
+      const hero = {
+      moveUp: async (steps = 1) => {
+          if (activeLessonId === 2) directionsUsedThisRun.up = true;
+          if (activeLessonId === 2) setDirectionsExecuted(prev => ({ ...prev, up: true }));
+          if (activeLessonId === 1) {
+          const newCount = lesson1MoveUpCount + steps;
+            setLesson1MoveUpCount(newCount);
+            if (newCount >= 4) {
+              setTimeout(() => {
+                setIsSuccess(true);
+                setExecutionLogs(prev => [...prev, "🎉 Success! You've completed Lesson 1!"]);
+                createSuccessConfetti();
+                }, steps * 900 + 500);
+            }
+          }
+          setIsMoving(true);
+        if (activeLessonId !== null && activeLessonId >= 9 && gameGridRef.current) {
+          await gameGridRef.current.movePlayerSmoothly('up', steps);
+              } else {
+          await moveCharacter('up', steps);
+        }
+            setIsMoving(false);
+        },
+      moveDown: async (steps = 1) => {
+          if (activeLessonId === 2) directionsUsedThisRun.down = true;
+          if (activeLessonId === 2) setDirectionsExecuted(prev => ({ ...prev, down: true }));
+          setIsMoving(true);
+        if (activeLessonId !== null && activeLessonId >= 9 && gameGridRef.current) {
+          await gameGridRef.current.movePlayerSmoothly('down', steps);
+              } else {
+          await moveCharacter('down', steps);
+        }
+            setIsMoving(false);
+        },
+      moveLeft: async (steps = 1) => {
+          if (activeLessonId === 2) directionsUsedThisRun.left = true;
+          if (activeLessonId === 2) setDirectionsExecuted(prev => ({ ...prev, left: true }));
+          setIsMoving(true);
+        if (activeLessonId !== null && activeLessonId >= 9 && gameGridRef.current) {
+          await gameGridRef.current.movePlayerSmoothly('left', steps);
+            } else {
+          await moveCharacter('left', steps);
+        }
+            setIsMoving(false);
+        },
+      moveRight: async (steps = 1) => {
+          if (activeLessonId === 2) directionsUsedThisRun.right = true;
+          if (activeLessonId === 2) setDirectionsExecuted(prev => ({ ...prev, right: true }));
+          setIsMoving(true);
+        if (activeLessonId !== null && activeLessonId >= 9 && gameGridRef.current) {
+          await gameGridRef.current.movePlayerSmoothly('right', steps);
+            } else {
+          await moveCharacter('right', steps);
+            }
+            setIsMoving(false);
+        },
+      moveXY: async (x: number, y: number) => {
+          if (x === undefined || y === undefined) {
+            setExecutionLogs(prev => [...prev, "❌ Error: moveXY requires x and y coordinates"]);
+          setIsRunning(false);
+            return;
+          }
+          if (typeof x !== 'number' || typeof y !== 'number') {
+            setExecutionLogs(prev => [...prev, "❌ Error: moveXY requires x and y coordinates"]);
+          setIsRunning(false);
+            return;
+          }
+          const targetX = Math.max(0, Math.min(14, x));
+          const targetY = Math.max(0, Math.min(14, y));
+          setExecutionLogs(prev => [...prev, `🚶 Moving to position (${targetX}, ${targetY})`]);
+          setIsMoving(true);
+          setCharacterPosition({ x: targetX, y: targetY });
+        await new Promise(res => setTimeout(res, 900));
+            setIsMoving(false);
+        },
+        health: 50,
+        usePotion: () => {
+          setExecutionLogs(prev => [...prev, "🧪 Used a health potion! +25 health"]);
+          hero.health += 25;
+        },
+        collect: () => {
+          setExecutionLogs(prev => [...prev, "💎 Collected an item!"]);
+      }
+    };
+    // Automatically insert await before hero.move* calls
+    const awaitedCode = code.replace(/(hero\.(moveUp|moveDown|moveLeft|moveRight|moveXY)\s*\([^)]*\))/g, 'await $1');
+    // Execute the entire code block
+    try {
+      setExecutionLogs(["Running your code..."]);
+       
+      const userFunction = new Function('hero', `return (async () => {${awaitedCode}\n})()`);
+      await userFunction(hero);
+      setExecutionLogs(prev => [...prev, "✅ Code execution completed!"]);
         // Check for lesson success using our standardized controller
         if (activeLessonId) {
           checkLessonSuccess(
             activeLessonId,
             {
               code,
-              characterPosition,
+            characterPosition: characterPositionRef.current,
               directionsUsed: directionsUsedThisRun
             }
           ).then(result => {
             if (result.success) {
-              // Use our standardized success handler
               onLessonSuccess({
                 lessonId: activeLessonId,
                 successMessage: result.message,
@@ -729,7 +947,6 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                       isSuccess: false,
                       isRunning: true
                     });
-                    
                     if (newState.executionLogs) {
                       setExecutionLogs(newState.executionLogs);
                     }
@@ -739,7 +956,7 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                     if (newState.isRunning !== undefined) {
                       setIsRunning(newState.isRunning);
                     }
-          } else {
+              } else {
                     if (stateOrFn.executionLogs) {
                       setExecutionLogs(stateOrFn.executionLogs);
                     }
@@ -753,163 +970,24 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                 },
                 onComplete: handleCompleteLesson
               });
-              
-              // Force the success state to be true
           setIsSuccess(true);
-              
-              // Create confetti using our standardized function
               createSuccessConfetti();
             } else {
-              // Not successful yet
-              setExecutionLogs(["Keep trying! You're on the right track."]);
+            setExecutionLogs(["❌ Wrong. Try again!"]);
             }
           }).catch(error => {
-            console.error("Error checking lesson success:", error);
-            setExecutionLogs(["An error occurred. Please try again."]);
-          });
-        } else {
-          setExecutionLogs(["Great job! Code executed successfully!"]);
-        }
-        return;
-      }
-      
-      // Highlight the current line being executed
-      // Find the actual line number in the original code (accounting for comments and blank lines)
-      let actualLineIndex = 0;
-      const codeToCheck = code.split('\n');
-      let linesProcessed = 0;
-      
-      for (let i = 0; i < codeToCheck.length; i++) {
-        const line = codeToCheck[i].trim();
-        if (line && !line.startsWith('//')) {
-          if (linesProcessed === currentLineIndex) {
-            actualLineIndex = i;
-            break;
-          }
-          linesProcessed++;
-        }
-      }
-      
-      // Set the current executing line for highlight
-      setCurrentExecutingLine(actualLineIndex);
-      
-      const currentLine = lines[currentLineIndex].trim();
-      if (currentLineIndex === 0) {
-        setExecutionLogs(["Running your code..."]);
-      }
-      
-      // Add a small delay before executing to make line highlighting visible
-      setTimeout(() => {
-      // Create a hero object with movement methods
-      const hero = {
-        moveUp: (steps = 1) => {
-          if (activeLessonId === 2) directionsUsedThisRun.up = true;
-          if (activeLessonId === 2) setDirectionsExecuted(prev => ({ ...prev, up: true }));
-          
-          // Special handling for lesson 1 to ensure success
-          if (activeLessonId === 1) {
-            // Increment the moveUp counter
-            const newCount = lesson1MoveUpCount + 1;
-            setLesson1MoveUpCount(newCount);
-            
-            // Check if we've reached the required number of moveUp calls
-            if (newCount >= 4) {
-              // Force success for lesson 1
-              setTimeout(() => {
-                setIsSuccess(true);
-                setExecutionLogs(prev => [...prev, "🎉 Success! You've completed Lesson 1!"]);
-                createSuccessConfetti();
-                }, steps * 900 + 500);
-            }
-          }
-          
-          setIsMoving(true);
-          moveCharacter('up', steps);
-          setTimeout(() => {
-            setIsMoving(false);
-            currentLineIndex++;
-            executeNextCommand();
-            }, steps * 900);
-        },
-        moveDown: (steps = 1) => {
-          if (activeLessonId === 2) directionsUsedThisRun.down = true;
-          if (activeLessonId === 2) setDirectionsExecuted(prev => ({ ...prev, down: true }));
-          setIsMoving(true);
-          moveCharacter('down', steps);
-          setTimeout(() => {
-            setIsMoving(false);
-            currentLineIndex++;
-            executeNextCommand();
-            }, steps * 900);
-        },
-        moveLeft: (steps = 1) => {
-          if (activeLessonId === 2) directionsUsedThisRun.left = true;
-          if (activeLessonId === 2) setDirectionsExecuted(prev => ({ ...prev, left: true }));
-          setIsMoving(true);
-          moveCharacter('left', steps);
-          setTimeout(() => {
-            setIsMoving(false);
-            currentLineIndex++;
-            executeNextCommand();
-            }, steps * 900);
-        },
-        moveRight: (steps = 1) => {
-          if (activeLessonId === 2) directionsUsedThisRun.right = true;
-          if (activeLessonId === 2) setDirectionsExecuted(prev => ({ ...prev, right: true }));
-          setIsMoving(true);
-          moveCharacter('right', steps);
-          setTimeout(() => {
-            setIsMoving(false);
-            currentLineIndex++;
-            executeNextCommand();
-            }, steps * 900);
-        },
-        // Add health property and usePotion method for lesson 6
-        health: 50,
-        usePotion: () => {
-          setExecutionLogs(prev => [...prev, "🧪 Used a health potion! +25 health"]);
-          hero.health += 25;
-          currentLineIndex++;
-          executeNextCommand();
-        },
-        // Add collect method for lesson 8
-        collect: () => {
-          setExecutionLogs(prev => [...prev, "💎 Collected an item!"]);
-          currentLineIndex++;
-          executeNextCommand();
-        },
-        // Add findNearestSpike for lesson 9
-        findNearestSpike: () => {
-          if (activeLessonId === 9) {
-            // Always return a dummy spike object at (6,5) for lesson 9
-            return { pos: { x: 6, y: 5 } };
-          }
-          return null;
-        }
-      };
-      try {
-        const executeFunction = new Function('hero', `
-          try {
-            ${currentLine}
-            return true;
-          } catch (error) {
-            return error;
-          }
-        `);
-        const result = executeFunction(hero);
-        if (result !== true) {
-          setCodeError("Code error, check and fix!");
+          setExecutionLogs([`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`]);
           setIsRunning(false);
-            setCurrentExecutingLine(-1); // Reset highlighting on error
+        });
         }
       } catch (error) {
+      setExecutionLogs([`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`]);
         setCodeError("Code error, check and fix!");
         setIsRunning(false);
-          setCurrentExecutingLine(-1); // Reset highlighting on error
+      setCurrentExecutingLine(-1);
+    } finally {
+        setIsRunning(false);
       }
-      }, 100);
-    };
-    executeNextCommand();
   };
   
   // Reset function
@@ -923,13 +1001,15 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
     setCurrentExecutingLine(-1); // Reset line highlighting
     setBookCollected(false);
     setPotionCollected(false);
+    setIsDead(false); // Reset death state
+    setDeathMessage(''); // Reset death message
     
     // Reset the tracked directions
     setDirectionsExecuted({ up: false, down: false, left: false, right: false });
     
     // Reset goal completion status for current lesson
     if (activeLessonId) {
-      const lessonData = CS1_LESSONS.find(l => l.id === activeLessonId);
+      const lessonData = X_CODE_LESSONS.find(l => l.id === activeLessonId);
       if (lessonData?.goals) {
         const newCompletedGoals = {...completedGoals};
         lessonData.goals.forEach((_, index) => {
@@ -954,28 +1034,29 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
       setCharacterPosition({ x: 5, y: 1 }); // Starting position for lesson 7 (diamond and key)
     } else if (activeLessonId === 8) {
       setCharacterPosition({ x: 11, y: 13 }); // Starting position for lesson 8
-    } else {
-      setBlueGem8Collected(false);
-      setRedGem8Collected(false);
-      setGreenGem8Collected(false);
-    }
+    } else if (activeLessonId === 9) {
+      setCharacterPosition({ x: 10, y: 14 }); // Updated starting position for lesson 9 (hazard zones)
+    } else if (activeLessonId === 10) {
+      // Reset hero position for lesson 10
+      setCharacterPosition({ x: 2, y: 11 });
+      // Reset decoy position
+      setDecoyPosition({ x: 11, y: 11 });
+      // Reset enemy positions
+      setLevel10Enemies([
+        { position: { x: 7, y: 2 } },
+        { position: { x: 8, y: 2 } }
+      ]);
+      // Reset animation states for lesson 10
+      setDecoyDirection('down');
+      setDecoyState('idle');
     setCharacterDirection('right');
     setCharacterState('idle');
-    // Reset gem collection state
-    setBlueGemCollected(false);
-    setRedGemCollected(false);
-    
-    // Reset lesson 1 specific counters
-    if (activeLessonId === 1) {
-      setLesson1MoveUpCount(0);
     }
-    setLastExecutedLine(0);
-    setLastCodeSnapshot([]);
   };
   
   // Show hint function
   const showHint = () => {
-    const lessonData = CS1_LESSONS.find(l => l.id === activeLessonId);
+    const lessonData = X_CODE_LESSONS.find(l => l.id === activeLessonId);
     if (lessonData && lessonData.hints && lessonData.hints.length > 0) {
       setExecutionLogs(prev => [...prev, `💡 Hint: ${lessonData.hints[0]}`]);
     }
@@ -983,7 +1064,7 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
   
   // Show solution function
   const showSolution = () => {
-    const lessonData = CS1_LESSONS.find(l => l.id === activeLessonId);
+    const lessonData = X_CODE_LESSONS.find(l => l.id === activeLessonId);
     if (lessonData && lessonData.solution) {
       setCode(lessonData.solution);
       setExecutionLogs(prev => [...prev, `🔍 Solution: ${lessonData.solution}`]);
@@ -1165,7 +1246,7 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
   // Track goal completion for all lessons
   useEffect(() => {
     if (!activeLessonId) return;
-    const lessonData = CS1_LESSONS.find(l => l.id === activeLessonId);
+    const lessonData = X_CODE_LESSONS.find(l => l.id === activeLessonId);
     if (!lessonData?.goals) return;
     
     const newCompletedGoals = {...completedGoals};
@@ -1245,9 +1326,166 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
     // completedGoals REMOVED
   ]);
 
+  // Helper to handle lesson start with loading screen
+  const handleStartLessonWithLoading = (lessonId: number) => {
+    console.log('DEBUG: handleStartLessonWithLoading called, setting loading to true');
+    // Store the lessonId for retrieval when loading completes
+    localStorage.setItem('loadingLessonId', lessonId.toString());
+    
+    const lesson = X_CODE_LESSONS.find(l => l.id === lessonId);
+    setLoadingGoals(lesson?.goals);
+    // Generate loader image path
+    let loaderPath = undefined;
+    if (lesson) {
+      // Example: /images/loader/CS1 Code Basics/week 1/week 2/Lesson 9 Hazard Zones.png
+      const weekFolder = `week 1/week 2`;
+      const fileName = `Lesson ${lesson.lessonNumber} ${lesson.title}.png`;
+      loaderPath = `/images/loader/CS1 Code Basics/${weekFolder}/${fileName}`;
+    }
+    setLoadingBg(loaderPath);
+    setLoading(true);
+    setLoadingProgress(0);
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 5;
+      setLoadingProgress(progress);
+      if (progress >= 100) {
+        clearInterval(interval);
+      }
+    }, 100);
+  };
+
+  // Handle loading screen animation complete
+  const handleLoadingComplete = (lessonId: number) => {
+    // Reset loading states
+    setLoading(false);
+    setLoadingProgress(0);
+    setLoadingGoals(undefined);
+    setLoadingBg(undefined);
+    
+    // Clear the stored lessonId
+    localStorage.removeItem('loadingLessonId');
+    
+    // Start the lesson
+    if (onStartLessonLevel) onStartLessonLevel(lessonId);
+  };
+
+  // Ensure player starts at (10, 14) for lesson 9 on lesson load
+  useEffect(() => {
+    if (activeLessonId === 9) {
+      setCharacterPosition({ x: 10, y: 14 });
+      setCharacterDirection('right');
+      setCharacterState('idle');
+    }
+  }, [activeLessonId]);
+
+  // Add enemy state for level 10
+  const [level10Enemies, setLevel10Enemies] = useState<{position: {x: number, y: number}, isChasing?: boolean, target?: 'hero' | 'decoy'}[]>([
+    { position: { x: 7, y: 2 } },
+    { position: { x: 8, y: 2 } }
+  ]);
+  const level10EnemiesRef = useRef(level10Enemies);
+  useEffect(() => { level10EnemiesRef.current = level10Enemies; }, [level10Enemies]);
+
+  // Add decoy state for level 10
+  const [decoyPosition, setDecoyPosition] = useState<{x: number, y: number}>({ x: 11, y: 11 });
+  const decoyPositionRef = useRef(decoyPosition);
+  useEffect(() => { decoyPositionRef.current = decoyPosition; }, [decoyPosition]);
+
+  // This might be in a useEffect or initialization function
+  useEffect(() => {
+    if (activeLessonId === 10) {
+      setCharacterPosition({ x: 2, y: 11 });
+      setDecoyPosition({ x: 11, y: 11 }); // Keep decoy at its position
+    }
+    // ... existing code ...
+  }, [activeLessonId]);
+
+  // Fix the enemy detection and chasing logic for lesson 10
+  useEffect(() => {
+    if (activeLessonId === 10) {
+      // Only run this effect in lesson 10
+      const enemyDetectionInterval = setInterval(() => {
+        // Update each enemy based on proximity to hero or decoy
+        const updatedEnemies = level10Enemies.map(enemy => {
+          // Calculate distance to hero and decoy
+          const distToHero = Math.sqrt(
+            Math.pow(enemy.position.x - characterPosition.x, 2) + 
+            Math.pow(enemy.position.y - characterPosition.y, 2)
+          );
+          
+          const distToDecoy = Math.sqrt(
+            Math.pow(enemy.position.x - decoyPosition.x, 2) + 
+            Math.pow(enemy.position.y - decoyPosition.y, 2)
+          );
+          
+          // Determine if enemy should chase and what target
+          let newPosition = {...enemy.position};
+          let isChasing = false;
+          let target: 'hero' | 'decoy' | undefined = undefined;
+          
+          // Check if hero or decoy is within detection range (4 grid cells)
+          if (distToHero <= 4 || distToDecoy <= 4) {
+            isChasing = true;
+            
+            // Chase the closest target
+            if (distToHero <= distToDecoy) {
+              target = 'hero';
+            } else {
+              target = 'decoy';
+            }
+            
+            // Move towards the actual position based on target type
+            const targetPosition = target === 'hero' ? characterPosition : decoyPosition;
+            
+            // Move towards target (faster movement)
+            if (targetPosition.x > newPosition.x) newPosition.x += 0.5;
+            else if (targetPosition.x < newPosition.x) newPosition.x -= 0.5;
+            
+            if (targetPosition.y > newPosition.y) newPosition.y += 0.5;
+            else if (targetPosition.y < newPosition.y) newPosition.y -= 0.5;
+            
+            // Ensure enemies stay on the grid (between 0 and 14)
+            newPosition.x = Math.max(0, Math.min(14, newPosition.x));
+            newPosition.y = Math.max(0, Math.min(14, newPosition.y));
+            
+            // GRID-BASED COLLISION: If enemy and hero are on the same grid cell, trigger death
+            if (
+              target === 'hero' &&
+              Math.floor(newPosition.x) === characterPosition.x &&
+              Math.floor(newPosition.y) === characterPosition.y &&
+              !isDead && !isSuccess
+            ) {
+              setIsDead(true);
+              setDeathMessage('You were caught by the enemy!');
+              setIsRunning(false);
+            }
+          }
+          
+          // Log enemy positions for debugging
+          console.log(`Enemy at (${newPosition.x.toFixed(1)}, ${newPosition.y.toFixed(1)}) ${isChasing ? 'chasing ' + target : 'idle'}`);
+          
+          // Return updated enemy
+          return {
+            ...enemy,
+            position: newPosition,
+            isChasing,
+            target
+          };
+        });
+        
+        // Update enemies state
+        setLevel10Enemies(updatedEnemies);
+        level10EnemiesRef.current = updatedEnemies;
+      }, 150); // Update every 150ms for faster reactions
+      
+      return () => clearInterval(enemyDetectionInterval);
+    }
+  }, [activeLessonId, characterPosition, decoyPosition, level10Enemies, isDead, isSuccess]);
+
   // Return the interactive lesson view if in lesson mode
   if (isLessonActive && activeLessonId) {
-    const lessonData = CS1_LESSONS.find(l => l.id === activeLessonId) || CS1_LESSONS[0];
+    const lessonData = X_CODE_LESSONS.find(l => l.id === activeLessonId) || X_CODE_LESSONS[0];
     
     return (
       <div className="min-h-screen bg-gray-900 text-white">
@@ -1408,17 +1646,33 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
             <div className="w-full md:w-2/3 p-4 flex flex-col h-full">
               {/* Game grid container with background */}
               <div className="relative w-full h-full rounded-lg overflow-hidden border border-gray-700">
-                {/* Background image - using LessonBackground component */}
+                {/* Background image - use custom for lesson 10 */}
+                {activeLessonId === 10 ? (
+                  <img
+                    src="/images/img-6.png"
+                    alt="Map 10 Background"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      zIndex: 0
+                    }}
+                  />
+                ) : (
                 <LessonBackground lessonNumber={lessonData.lessonNumber} />
+                )}
                 
                 {/* Semi-transparent overlay to ensure grid visibility */}
                 <div className="absolute inset-0 bg-gray-900 bg-opacity-30 z-1">
                   {/* Game grid with coordinates */}
                   <div className="absolute inset-0 z-2" style={{ width: '100%', height: '100%' }}>
                     {/* Grid rendering with enhanced highlighting */}
-                    {Array.from({ length: 15 }, (_, y) => (
+                    {Array.from({ length: 15 }, (_, y: number) => (
                       <div key={`row-${y}`} style={{ display: 'flex', width: '100%', height: '6.66%' }}>
-                        {Array.from({ length: 15 }, (_, x) => {
+                        {Array.from({ length: 15 }, (_, x: number) => {
                           const isCurrentCell = characterPosition.x === x && characterPosition.y === y;
                           // Waypoints for lesson 4
                           const lesson4Waypoints = [
@@ -1459,7 +1713,7 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                                     boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
                                     border: '1.5px solid #fbbf24',
                                     pointerEvents: 'none',
-                                    zIndex: 2,
+                                    zIndex: 20,
                                     whiteSpace: 'nowrap'
                                   }}
                                 >
@@ -1504,14 +1758,14 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                                     boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
                                     border: '1.5px solid #fbbf24',
                                     pointerEvents: 'none',
-                                    zIndex: 2,
+                                    zIndex: 20,
                                     whiteSpace: 'nowrap'
                                   }}
                                 >
                                   Potion
                                 </div>
                                 <img
-                                  src="/images/potion.png"
+                                  src="/images/potions/health-potion.png"
                                   alt="Potion"
                                   style={{ width: '80%', height: '80%', objectFit: 'contain', pointerEvents: 'none', zIndex: 1 }}
                                 />
@@ -1549,7 +1803,7 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                                     boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
                                     border: '1.5px solid #fbbf24',
                                     pointerEvents: 'none',
-                                    zIndex: 2,
+                                    zIndex: 20,
                                     whiteSpace: 'nowrap'
                                   }}
                                 >
@@ -1589,7 +1843,7 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                                     boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
                                     border: '1.5px solid #fbbf24',
                                     pointerEvents: 'none',
-                                    zIndex: 2,
+                                    zIndex: 20,
                                     whiteSpace: 'nowrap'
                                   }}
                                 >
@@ -1629,7 +1883,7 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                                     boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
                                     border: '1.5px solid #fbbf24',
                                     pointerEvents: 'none',
-                                    zIndex: 2,
+                                    zIndex: 20,
                                     whiteSpace: 'nowrap'
                                   }}
                                 >
@@ -1669,7 +1923,7 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                                     boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
                                     border: '1.5px solid #fbbf24',
                                     pointerEvents: 'none',
-                                    zIndex: 2,
+                                    zIndex: 20,
                                     whiteSpace: 'nowrap'
                                   }}
                                 >
@@ -1709,7 +1963,7 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                                     boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
                                     border: '1.5px solid #fbbf24',
                                     pointerEvents: 'none',
-                                    zIndex: 2,
+                                    zIndex: 20,
                                     whiteSpace: 'nowrap'
                                   }}
                                 >
@@ -1720,7 +1974,7 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                             );
                           }
                           // Show spike-trap image at (6,5) for lesson 9
-                          if (activeLessonId === 9 && x === 6 && y === 5) {
+                          if (activeLessonId === 9 && x === 7 && y === 13) {
                             return (
                               <div
                                 key={`cell-${x}-${y}`}
@@ -1735,7 +1989,6 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                                   flexDirection: 'column',
                                 }}
                               >
-                                {/* Name label above the object */}
                                 <div
                                   style={{
                                     position: 'absolute',
@@ -1751,7 +2004,7 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                                     boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
                                     border: '1.5px solid #fbbf24',
                                     pointerEvents: 'none',
-                                    zIndex: 2,
+                                    zIndex: 20,
                                     whiteSpace: 'nowrap'
                                   }}
                                 >
@@ -1760,11 +2013,17 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                                 <img
                                   src="/images/Spike_Trap.webp"
                                   alt="Spike Trap"
-                                  style={{ width: '80%', height: '80%', objectFit: 'contain', pointerEvents: 'none', zIndex: 1 }}
+                                  style={{ width: 40, height: 40, zIndex: 1 }}
                                 />
                               </div>
                             );
                           }
+                          // Inside the grid rendering loop, after defining isCurrentCell, add:
+                          const isEnemy = activeLessonId === 10 && level10Enemies.some(e => 
+                            Math.floor(e.position.x) === x && 
+                            Math.floor(e.position.y) === y
+                          );
+                          const isDecoy = activeLessonId === 10 && decoyPosition.x === x && decoyPosition.y === y;
                           return (
                             <div
                               key={`cell-${x}-${y}`}
@@ -1788,6 +2047,91 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                                 transition: 'all 0.3s ease',
                               }}
                             >
+                              {/* Render enemy for level 10 */}
+                              {isEnemy && (
+                                <span
+                                  style={{
+                                    fontSize: '2.2rem',
+                                    background: level10Enemies.find(e => 
+                                      Math.floor(e.position.x) === x && 
+                                      Math.floor(e.position.y) === y
+                                    )?.isChasing 
+                                      ? 'rgba(255,0,0,0.95)' 
+                                      : 'rgba(255,0,0,0.85)',
+                                    border: level10Enemies.find(e => 
+                                      Math.floor(e.position.x) === x && 
+                                      Math.floor(e.position.y) === y
+                                    )?.isChasing 
+                                      ? '3px solid white' 
+                                      : '3px solid yellow',
+                                    borderRadius: '8px',
+                                    boxShadow: level10Enemies.find(e => 
+                                      Math.floor(e.position.x) === x && 
+                                      Math.floor(e.position.y) === y
+                                    )?.isChasing 
+                                      ? '0 0 16px 8px white' 
+                                      : '0 0 16px 8px yellow',
+                                    padding: '2px 8px',
+                                    zIndex: 10,
+                                    position: 'absolute',
+                                    top: '50%',
+                                    left: '50%',
+                                    transform: 'translate(-50%, -50%)',
+                                    pointerEvents: 'none',
+                                  }}
+                                  title={level10Enemies.find(e => 
+                                    Math.floor(e.position.x) === x && 
+                                    Math.floor(e.position.y) === y
+                                  )?.isChasing 
+                                    ? `Enemy chasing ${level10Enemies.find(e => 
+                                        Math.floor(e.position.x) === x && 
+                                        Math.floor(e.position.y) === y
+                                      )?.target}` 
+                                    : "Enemy"}
+                                >
+                                  {level10Enemies.find(e => 
+                                    Math.floor(e.position.x) === x && 
+                                    Math.floor(e.position.y) === y
+                                  )?.isChasing ? '😡' : '👹'}
+                                </span>
+                              )}
+                              {isDecoy && (
+                                <div style={{ 
+                                  position: 'absolute',
+                                  top: '50%',
+                                  left: '50%',
+                                  transform: 'translate(-50%, -50%)',
+                                  zIndex: 1000 
+                                }}>
+                                  {/* Direct image implementation for decoy */}
+                                  <img 
+                                    src={`/assets/characters/assasin-wolf/${decoyState === 'idle' ? 'Idle' : 'Walk'}_${
+                                      decoyDirection.charAt(0).toUpperCase() + decoyDirection.slice(1)
+                                    }/00${decoyFrame}.png`}
+                                    alt={`Decoy ${decoyState} ${decoyDirection}`}
+                                    style={{
+                                      width: '40px',
+                                      height: '40px',
+                                      imageRendering: 'pixelated'
+                                    }}
+                                  />
+                                  
+                                  {/* Debug info */}
+                                  <div style={{
+                                    position: 'absolute',
+                                    bottom: '-20px',
+                                    left: '0',
+                                    background: 'rgba(0,0,0,0.7)',
+                                    color: 'white',
+                                    fontSize: '10px',
+                                    padding: '2px',
+                                    width: '100%',
+                                    textAlign: 'center'
+                                  }}>
+                                    {decoyState}-{decoyDirection}
+                                  </div>
+                                </div>
+                              )}
                               {x}.{y}
                               {/* Lesson 4 waypoint marker */}
                               {isLesson4Waypoint && (
@@ -1830,7 +2174,7 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                     position: 'absolute',
                     width: '80px',
                     height: '80px',
-                    zIndex: 10,
+                    zIndex: 9,
                     transition: 'all 0.5s ease',
                     left: `calc(${characterPosition.x * 6.66}% + 35px)`, // move right by 3px more
                     top: `calc(${characterPosition.y * 6.66}% + 32px)`, // keep down offset
@@ -1949,6 +2293,13 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                   codeLines={codeLines}
                   placeholder={codePlaceholder}
                   />
+                
+                {/* Button to move player to position (6, 7) */}
+                {activeLessonId === 9 && (
+                  <div className="mt-4 flex space-x-2">
+                    {/* Debug buttons removed as requested */}
+                  </div>
+                )}
                 </div>
                 
               {/* Execution log section - smaller height */}
@@ -2239,19 +2590,18 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                   
                   {/* Your Quest Section (CS1 only) */}
                   {selectedLessonData && isCS1Lesson(selectedLessonData) && (() => {
-                    const storyData = getStoryData(selectedLessonData.id);
-                    return storyData ? (
-                      <div className="bg-gradient-to-r from-blue-700 via-blue-800 to-blue-900 rounded-lg p-4 mb-4 shadow-md">
-                        <h4 className="font-semibold text-white mb-2 flex items-center">
-                          <span className="mr-2">⚔️</span> Your Quest
-                        </h4>
-                        <div className="text-sm text-blue-100 space-y-2">
-                          <div className="font-medium text-blue-200">{storyData.title}</div>
-                          <div className="text-xs leading-relaxed text-blue-100">{storyData.questUpdate}</div>
-                          <div className="text-xs text-blue-300"><strong>Setting:</strong> {storyData.setting}</div>
+                    // Instead of getting story data separately, use the fields directly from selectedLessonData
+                    return (
+                      <div className="bg-blue-900 bg-opacity-50 p-3 rounded-lg mb-4">
+                        <div className="flex items-center mb-2">
+                          <BookOpen className="mr-2 text-blue-300" size={18} />
+                          <div className="text-sm font-semibold text-blue-300">Quest Update</div>
                         </div>
+                        <div className="font-medium text-blue-200">{selectedLessonData.title}</div>
+                        <div className="text-xs leading-relaxed text-blue-100">{selectedLessonData.questUpdate}</div>
+                        <div className="text-xs text-blue-300"><strong>Setting:</strong> {selectedLessonData.setting}</div>
                       </div>
-                    ) : null;
+                    );
                   })()}
                   
                   {/* Lesson Content */}
@@ -2310,7 +2660,7 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                       {selectedLessonData.id === 1 ? (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         <button 
-                          onClick={() => onStartLessonLevel && onStartLessonLevel(selectedLessonData.id)}
+                          onClick={() => handleStartLessonWithLoading(selectedLessonData.id)}
                           className="px-6 py-2 bg-green-600 hover:bg-green-500 rounded-lg flex items-center font-medium"
                         >
                           <Play size={16} className="mr-2" /> Start
@@ -2324,7 +2674,7 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                         </button>
                       ) : (
                         <button 
-                          onClick={() => onStartLessonLevel && onStartLessonLevel(selectedLessonData.id)}
+                          onClick={() => handleStartLessonWithLoading(selectedLessonData.id)}
                           className="px-6 py-2 bg-green-600 hover:bg-green-500 rounded-lg flex items-center font-medium"
                         >
                           <Play size={16} className="mr-2" /> Start
@@ -2655,6 +3005,90 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
           </div>
         </div>
       </ReactModal>
+      <LoadingScreen 
+        progress={loadingProgress} 
+        visible={loading} 
+        goals={loadingGoals} 
+        backgroundImage={loadingBg} 
+        onLoadingComplete={() => {
+          // Extract the lessonId from the stored selectedLessonData or use a more reliable approach
+          // Get the lessonId directly from the URL or from a state variable that we set when starting the loading
+          const storedLessonId = localStorage.getItem('loadingLessonId');
+          const lessonId = storedLessonId ? parseInt(storedLessonId) : undefined;
+          
+          console.log("Loading complete for lesson:", lessonId);
+          if (lessonId) {
+            handleLoadingComplete(lessonId);
+          } else {
+            console.error("Could not determine lesson ID for loading completion");
+            // Fallback: if we can't determine the lesson ID, at least hide the loading screen
+            setLoading(false);
+          }
+        }}
+      />
+      {/* In the grid rendering section for level 10, add enemy rendering */}
+      {activeLessonId === 10 && level10Enemies.map((enemy, index) => (
+        <div
+          key={`enemy-${index}`}
+          style={{
+            position: 'absolute',
+            left: `calc(${enemy.position.x * 6.66}% + 35px)`,
+            top: `calc(${enemy.position.y * 6.66}% + 32px)`,
+            width: '60px',
+            height: '60px',
+            backgroundColor: 'rgba(255, 0, 0, 0.85)',
+            border: '4px solid yellow',
+            borderRadius: '8px',
+            zIndex: 999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transform: 'translate(-50%, -100%)',
+            fontWeight: 'bold',
+            boxShadow: '0 0 16px 4px #FFD700',
+            pointerEvents: 'none',
+          }}
+        >
+          <div style={{ color: 'white', fontSize: '40px', textShadow: '2px 2px 8px #000' }}>👹</div>
+        </div>
+      ))}
+      {/* Add this after the Position display div at the bottom of the screen */}
+      <div style={{
+        position: 'fixed',
+        bottom: '100px',
+        right: '20px',
+        width: '100px',
+        height: '100px',
+        border: '2px solid red',
+        backgroundColor: 'blue',
+        color: 'white',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        fontWeight: 'bold',
+        zIndex: 9999
+      }}>
+        DECOY DEBUG
+      </div>
+      {/* Death screen overlay - positioned over the entire viewport */}
+      {isDead && (
+        <div className="fixed inset-0 bg-black bg-opacity-80 z-[9999] flex flex-col items-center justify-center">
+          <div className="text-center p-8 bg-gray-800 rounded-lg border-2 border-red-600 max-w-md">
+            <div className="text-6xl mb-4">💀</div>
+            <h2 className="text-2xl font-bold text-red-500 mb-4">Game Over</h2>
+            <p className="text-white mb-6">{deathMessage}</p>
+            <button
+              onClick={resetGame}
+              className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-colors duration-200 flex items-center justify-center mx-auto"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Try Again
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

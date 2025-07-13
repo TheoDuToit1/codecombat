@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
 import { BookOpen, Clock, Star, Trophy, Lock, CheckCircle, Target, Users, Zap, Award, Map, ScrollText } from 'lucide-react';
 import { LESSON_PLAN, COURSES, ACHIEVEMENTS, Lesson, Course } from '../data/lessonPlan';
-import { CS1_STORY, CS1_STORY_OVERVIEW, getStoryData } from '../data/lessonStory';
+import { X_CODE_LESSONS } from '../data/X_CODE_LESSONS';
+
+// Define a CS1_STORY_OVERVIEW constant to replace the imported one
+const CS1_STORY_OVERVIEW = {
+  mentor: "Sage the Wizard",
+  world: "Syntaxia",
+  overview: "Begin your coding journey in the magical realm of Syntaxia. Under the guidance of Sage the Wizard, you'll learn the fundamentals of programming while exploring the castle grounds, nearby villages, and mysterious forests. Master movement, variables, conditionals, and loops as you solve puzzles and help the inhabitants of this enchanted land."
+};
 
 interface LessonPlanViewerProps {
   isOpen: boolean;
@@ -255,7 +262,7 @@ export const LessonPlanViewer: React.FC<LessonPlanViewerProps> = ({
                       )}
                       {/* Quest Update for CS1 */}
                       {selectedCourse === 'cs1' && (() => {
-                        const storyData = getStoryData(lesson.id);
+                        const storyData = X_CODE_LESSONS.find(s => s.id === lesson.id);
                         return storyData ? (
                           <div className="text-xs text-orange-600 mt-1 font-medium">
                             ⚔️ {storyData.questUpdate}
@@ -289,7 +296,7 @@ export const LessonPlanViewer: React.FC<LessonPlanViewerProps> = ({
 
                   {/* Your Quest Section */}
                   {selectedCourse === 'cs1' && (() => {
-                    const storyData = getStoryData(selectedLesson.id);
+                    const storyData = X_CODE_LESSONS.find(s => s.id === selectedLesson.id);
                     return storyData ? (
                       <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-4">
                         <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
