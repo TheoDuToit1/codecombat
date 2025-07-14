@@ -347,6 +347,23 @@ const createPlaceholderWithMissingLetters = (code: string, lessonNumber: number)
   }).join('\n');
 };
 
+// LESSON 11 GEM POSITIONS
+const LESSON11_GEMS = [
+  { x: 2, y: 3, color: 'blue' },
+  { x: 7, y: 5, color: 'red' },
+  { x: 12, y: 8, color: 'green' },
+  { x: 4, y: 12, color: 'blue' },
+  { x: 10, y: 2, color: 'red' },
+  { x: 13, y: 13, color: 'green' },
+  { x: 1, y: 10, color: 'blue' },
+  { x: 8, y: 13, color: 'red' },
+  { x: 6, y: 7, color: 'green' },
+  { x: 11, y: 4, color: 'blue' }
+];
+
+// LESSON 12 GEM POSITION
+const LESSON12_GEM = { x: 7, y: 7, color: 'blue' };
+
 const XCodeAcademy: React.FC<XCodeAcademyProps> = ({ 
   onBack,
   currentProgress: initialProgress = 3, // Default to lesson 3 being completed
@@ -372,8 +389,7 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
   const [codePlaceholder, setCodePlaceholder] = useState<string>('');
   const [executionLogs, setExecutionLogs] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState<boolean>(false);
-  const [currentExecutingLine, setCurrentExecutingLine] = useState<number>(-1);
-  const [codeLines, setCodeLines] = useState<string[]>([]);
+  // Line highlighting removed
   const [codeError, setCodeError] = useState<string | null>(null);
   const [isMoving, setIsMoving] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
@@ -415,6 +431,8 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
   const [decoyDirection, setDecoyDirection] = useState<'up' | 'down' | 'left' | 'right'>('down');
   const [decoyState, setDecoyState] = useState<'idle' | 'walk'>('idle');
   const [decoyFrame, setDecoyFrame] = useState(0);
+  // Add pixel position state for decoy smooth movement
+  const [decoyPixelPos, setDecoyPixelPos] = useState({ x: 0, y: 0 });
   
   // Add an effect to animate the decoy frames
   useEffect(() => {
@@ -453,6 +471,17 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
   const [loadingBg, setLoadingBg] = useState<string | undefined>(undefined);
   
   const gameGridRef = useRef<GameGridHandle>(null);
+  
+  // LESSON 11 GEM POSITIONS
+  const [lesson11Collected, setLesson11Collected] = useState(Array(LESSON11_GEMS.length).fill(false));
+  
+  // In component state:
+  const [lesson12Collected, setLesson12Collected] = useState(false);
+  // Add state for lesson 12 gem collection
+  const [lesson12GemCollected, setLesson12GemCollected] = useState(false);
+  
+  // Add state for tracking lesson 4 waypoints
+  const [lesson4VisitedWaypoints, setLesson4VisitedWaypoints] = useState<{[key: string]: boolean}>({});
   
   // Reset moveUp counter when code or lesson changes
   useEffect(() => {
@@ -641,20 +670,47 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
     moveStep();
     });
   };
-
+   // Smoothly animates the decoy's movement in the given direction by 1 tile (assumes 48px per tile)
+   const animateDecoyMove = async (direction: 'up' | 'down' | 'left' | 'right') => {
+    const tileSize = 48;
+    let startPixelPos = { x: decoyPixelPos.x, y: decoyPixelPos.y };
+    let endPixelPos = { ...startPixelPos };
+    switch (direction) {
+      case 'up': endPixelPos.y -= tileSize; break;
+      case 'down': endPixelPos.y += tileSize; break;
+      case 'left': endPixelPos.x -= tileSize; break;
+      case 'right': endPixelPos.x += tileSize; break;
+    }
+    const duration = 300; // ms
+    const startTime = performance.now();
+    return new Promise<void>(resolve => {
+      function animate(now: number) {
+        const elapsed = now - startTime;
+        const t = Math.min(1, elapsed / duration);
+        const newX = startPixelPos.x + (endPixelPos.x - startPixelPos.x) * t;
+        const newY = startPixelPos.y + (endPixelPos.y - startPixelPos.y) * t;
+        setDecoyPixelPos({ x: newX, y: newY });
+        if (t < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          setDecoyPixelPos(endPixelPos);
+          resolve();
+        }
+      }
+      requestAnimationFrame(animate);
+    });
+  };
   // Update the executeCode function to handle empty code
   const executeCode = async (code: string) => {
     if (isRunning) return;
     if (!code || code.trim() === '') {
       setExecutionLogs(['<span class="zoom-effect flashing-orange-gradient">Code first!</span>']);
       setTimeout(() => { setExecutionLogs([]); }, 2000);
-      setCurrentExecutingLine(-1);
       setIsRunning(false);
       return;
     }
     setIsRunning(true);
     setExecutionLogs([]);
-    setCurrentExecutingLine(-1);
     setCodeError(null);
 
     // --- LEVEL 10 DECOY LOGIC ---
@@ -662,25 +718,25 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
       if (/hero\s*\./.test(code)) {
         setExecutionLogs(["❌ Error: Use <b>decoy</b> instead of <b>hero</b> in this level. Example: <code>decoy.moveRight()</code>"]);
         setCodeError("Use decoy instead of hero in this level.");
-          setIsRunning(false);
-          setCurrentExecutingLine(-1);
-          return;
-        }
+        setIsRunning(false);
+        return;
+      }
+
       const decoy = {
         moveUp: async (steps = 1) => {
           setDecoyDirection('up');
           setDecoyState('walk');
           let stepsRemaining = steps;
           return new Promise<void>(resolve => {
-            const moveStep = () => {
+            const moveStep = async () => {
               if (stepsRemaining <= 0) {
                 setDecoyState('idle');
-                setTimeout(resolve, 250); // Small delay between commands
+                setTimeout(resolve, 250);
                 return;
               }
-              setDecoyPosition(prev => ({ x: prev.x, y: Math.max(0, prev.y - 1) }));
+              await animateDecoyMove('up');
               stepsRemaining--;
-              setTimeout(moveStep, 250); // Faster timing for smoother animation
+              setTimeout(moveStep, 0);
             };
             moveStep();
           });
@@ -690,15 +746,15 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
           setDecoyState('walk');
           let stepsRemaining = steps;
           return new Promise<void>(resolve => {
-            const moveStep = () => {
+            const moveStep = async () => {
               if (stepsRemaining <= 0) {
                 setDecoyState('idle');
-                setTimeout(resolve, 250); // Small delay between commands
+                setTimeout(resolve, 250);
                 return;
               }
-              setDecoyPosition(prev => ({ x: prev.x, y: Math.min(14, prev.y + 1) }));
+              await animateDecoyMove('down');
               stepsRemaining--;
-              setTimeout(moveStep, 250); // Faster timing for smoother animation
+              setTimeout(moveStep, 0);
             };
             moveStep();
           });
@@ -708,15 +764,15 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
           setDecoyState('walk');
           let stepsRemaining = steps;
           return new Promise<void>(resolve => {
-            const moveStep = () => {
+            const moveStep = async () => {
               if (stepsRemaining <= 0) {
                 setDecoyState('idle');
-                setTimeout(resolve, 250); // Small delay between commands
+                setTimeout(resolve, 250);
                 return;
               }
-              setDecoyPosition(prev => ({ x: Math.max(0, prev.x - 1), y: prev.y }));
+              await animateDecoyMove('left');
               stepsRemaining--;
-              setTimeout(moveStep, 250); // Faster timing for smoother animation
+              setTimeout(moveStep, 0);
             };
             moveStep();
           });
@@ -726,15 +782,15 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
           setDecoyState('walk');
           let stepsRemaining = steps;
           return new Promise<void>(resolve => {
-            const moveStep = () => {
+            const moveStep = async () => {
               if (stepsRemaining <= 0) {
                 setDecoyState('idle');
-                setTimeout(resolve, 250); // Small delay between commands
+                setTimeout(resolve, 250);
                 return;
               }
-              setDecoyPosition(prev => ({ x: Math.min(14, prev.x + 1), y: prev.y }));
+              await animateDecoyMove('right');
               stepsRemaining--;
-              setTimeout(moveStep, 250); // Faster timing for smoother animation
+              setTimeout(moveStep, 0);
             };
             moveStep();
           });
@@ -817,7 +873,6 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
         setExecutionLogs([`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`]);
         setCodeError("Code error, check and fix!");
         setIsRunning(false);
-        setCurrentExecutingLine(-1);
       } finally {
         setIsRunning(false);
         }
@@ -984,7 +1039,6 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
       setExecutionLogs([`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`]);
         setCodeError("Code error, check and fix!");
         setIsRunning(false);
-      setCurrentExecutingLine(-1);
     } finally {
         setIsRunning(false);
       }
@@ -998,7 +1052,6 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
     setIsRunning(false);
     setCodeError(null);
     setIsSuccess(false);
-    setCurrentExecutingLine(-1); // Reset line highlighting
     setBookCollected(false);
     setPotionCollected(false);
     setIsDead(false); // Reset death state
@@ -1006,6 +1059,24 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
     
     // Reset the tracked directions
     setDirectionsExecuted({ up: false, down: false, left: false, right: false });
+    
+    // Reset waypoints for lesson 4
+    setLesson4VisitedWaypoints({});
+    
+    // Reset gem collection states for lesson 12
+    setLesson12GemCollected(false);
+    
+    // Reset gem collection states for lesson 11
+    if (activeLessonId === 11) {
+      setLesson11Collected(Array(LESSON11_GEMS.length).fill(false));
+    }
+    
+    // Reset gem collection states for lesson 7 and 8
+    setBlueGemCollected(false);
+    setRedGemCollected(false);
+    setBlueGem8Collected(false);
+    setRedGem8Collected(false);
+    setGreenGem8Collected(false);
     
     // Reset goal completion status for current lesson
     if (activeLessonId) {
@@ -1051,6 +1122,11 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
       setDecoyState('idle');
     setCharacterDirection('right');
     setCharacterState('idle');
+    } else if (activeLessonId === 11) {
+      setCharacterPosition({ x: 7, y: 14 });
+    } else if (activeLessonId === 12) {
+      setLesson12Collected(false);
+      setCharacterPosition({ x: 7, y: 14 });
     }
   };
   
@@ -1216,32 +1292,99 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
   }, [activeLessonId]);
 
   // Add collection logic for lesson 8 gems
-  useEffect(() => {
-    if (activeLessonId === 8) {
-      if (characterPosition.x === 2 && characterPosition.y === 13 && !blueGem8Collected) {
-        setBlueGem8Collected(true);
-      }
-      if (characterPosition.x === 2 && characterPosition.y === 5 && !redGem8Collected) {
-        setRedGem8Collected(true);
-      }
-      if (characterPosition.x === 9 && characterPosition.y === 5 && !greenGem8Collected) {
-        setGreenGem8Collected(true);
-      }
-      // Show success when all three gems are collected
-      if (blueGem8Collected && redGem8Collected && greenGem8Collected && !isSuccess) {
-        setIsSuccess(true);
-        setExecutionLogs(logs => [...logs, "🎉 Success! You've collected all three gems!"]);
-        createSuccessConfetti();
-      }
+useEffect(() => {
+  if (activeLessonId === 8) {
+    if (characterPosition.x === 2 && characterPosition.y === 13 && !blueGem8Collected) {
+      setBlueGem8Collected(true);
     }
-  }, [activeLessonId, characterPosition, blueGem8Collected, redGem8Collected, greenGem8Collected, isSuccess]);
+    if (characterPosition.x === 2 && characterPosition.y === 5 && !redGem8Collected) {
+      setRedGem8Collected(true);
+    }
+    if (characterPosition.x === 9 && characterPosition.y === 5 && !greenGem8Collected) {
+      setGreenGem8Collected(true);
+    }
+    // Show success when all three gems are collected
+    if (blueGem8Collected && redGem8Collected && greenGem8Collected && !isSuccess) {
+      setIsSuccess(true);
+      setExecutionLogs(logs => [...logs, "🎉 Success! You've collected all three gems!"]);
+      createSuccessConfetti();
+    }
+  }
+}, [activeLessonId, characterPosition, blueGem8Collected, redGem8Collected, greenGem8Collected, isSuccess]);
+
+// Add collection logic for lesson 12 gem
+useEffect(() => {
+  if (
+    activeLessonId === 12 &&
+    characterPosition.x === 4 &&
+    characterPosition.y === 8 &&
+    !lesson12GemCollected
+  ) {
+    setLesson12GemCollected(true);
+    setExecutionLogs(logs => [...logs, "💎 You've collected the blue gem!"]);
+  }
+
+  // Check victory condition for lesson 12: gem collected AND at position (7,1)
+  if (
+    activeLessonId === 12 &&
+    characterPosition.x === 7 &&
+    characterPosition.y === 1 &&
+    lesson12GemCollected &&
+    !isSuccess
+  ) {
+    setIsSuccess(true);
+    setExecutionLogs(logs => [...logs, "🎉 Success! You've collected the gem and reached the exit!"]);
+    createSuccessConfetti();
+  }
+}, [activeLessonId, characterPosition, lesson12GemCollected, isSuccess]);
   
-  // Play victory sound when success state changes
-  useEffect(() => {
-    if (isSuccess) {
-      setPlayVictorySound(true);
+  // Add a useEffect to track visited waypoints in lesson 4 and check for victory
+useEffect(() => {
+  if (activeLessonId === 4) {
+    // Define the waypoints
+    const lesson4Waypoints = [
+      { x: 11, y: 14 },
+      { x: 8, y: 14 },
+      { x: 8, y: 5 },
+      { x: 12, y: 5 },
+    ];
+
+    // Check if player is on a waypoint
+    const currentWaypoint = lesson4Waypoints.find(
+      wp => wp.x === characterPosition.x && wp.y === characterPosition.y
+    );
+
+    if (currentWaypoint) {
+      // Mark this waypoint as visited
+      const waypointKey = `${currentWaypoint.x},${currentWaypoint.y}`;
+      if (!lesson4VisitedWaypoints[waypointKey]) {
+        setLesson4VisitedWaypoints(prev => ({
+          ...prev,
+          [waypointKey]: true
+        }));
+        setExecutionLogs(logs => [...logs, `⭐ Waypoint reached at (${currentWaypoint.x}, ${currentWaypoint.y})!`]);
+      }
     }
-  }, [isSuccess]);
+
+    // Check if all waypoints have been visited
+    const allWaypointsVisited = lesson4Waypoints.every(
+      wp => lesson4VisitedWaypoints[`${wp.x},${wp.y}`]
+    );
+
+    if (allWaypointsVisited && !isSuccess) {
+      setIsSuccess(true);
+      setExecutionLogs(logs => [...logs, "🎉 Success! You've reached all waypoints!"]);
+      createSuccessConfetti();
+    }
+  }
+}, [activeLessonId, characterPosition, lesson4VisitedWaypoints, isSuccess]);
+
+// Play victory sound when success state changes
+useEffect(() => {
+  if (isSuccess) {
+    setPlayVictorySound(true);
+  }
+}, [isSuccess]);
   
   // Track goal completion for all lessons
   useEffect(() => {
@@ -1661,6 +1804,40 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                       zIndex: 0
                     }}
                   />
+                ) : activeLessonId === 11 ? (
+                  <img
+                    src="/images/img7.png"
+                    alt="Map 11 Background"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain', // Always show the whole image
+                      zIndex: 0,
+                      transform: 'scale(1.2)', // No zoom, just fit
+                      transformOrigin: 'center center',
+                      background: '#222' // Optional: see the empty space
+                    }}
+                  />
+                ) : activeLessonId === 12 ? (
+                  <img
+                    src="/images/img8.png"
+                    alt="Map 12 Background"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      zIndex: 0,
+                      background: '#222',
+                      transform: 'scale(1.6)', // Zoom in
+                      transformOrigin: 'center center',
+                    }}
+                  />
                 ) : (
                 <LessonBackground lessonNumber={lessonData.lessonNumber} />
                 )}
@@ -2024,6 +2201,82 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                             Math.floor(e.position.y) === y
                           );
                           const isDecoy = activeLessonId === 10 && decoyPosition.x === x && decoyPosition.y === y;
+                          if (activeLessonId === 11) {
+                            const gemIdx = LESSON11_GEMS.findIndex(gem => gem.x === x && gem.y === y);
+                            if (gemIdx !== -1 && !lesson11Collected[gemIdx]) {
+                              const gem = LESSON11_GEMS[gemIdx];
+                              const imgSrc = gem.color === 'blue'
+                                ? '/images/gem-blue.png'
+                                : gem.color === 'red'
+                                ? '/images/gem-red.png'
+                                : '/images/gem-green.png';
+                              return (
+                                <div key={`cell-${x}-${y}`} style={{
+                                  width: '6.66%',
+                                  height: '100%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  position: 'relative',
+                                  background: 'transparent',
+                                  flexDirection: 'column',
+                                }}>
+                                  <div style={{
+                                    position: 'absolute',
+                                    top: '-18px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    background: 'rgba(30,30,40,0.95)',
+                                    color: '#fbbf24',
+                                    fontWeight: 700,
+                                    fontSize: '13px',
+                                    padding: '2px 10px',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                                    border: '1.5px solid #fbbf24',
+                                    pointerEvents: 'none',
+                                    zIndex: 20,
+                                    whiteSpace: 'nowrap'
+                                  }}>{gem.color.charAt(0).toUpperCase() + gem.color.slice(1)} Gem</div>
+                                  <img src={imgSrc} alt={`${gem.color} Gem`} style={{ width: 28, height: 28, zIndex: 1 }} />
+                                </div>
+                              );
+                            }
+                          }
+
+                          if (activeLessonId === 12 && x === 4 && y === 8 && !lesson12GemCollected) {
+                            return (
+                              <div key={`cell-${x}-${y}`} style={{
+                                width: '6.66%',
+                                height: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                position: 'relative',
+                                background: 'transparent',
+                                flexDirection: 'column',
+                              }}>
+                                <div style={{
+                                  position: 'absolute',
+                                  top: '-18px',
+                                  left: '50%',
+                                  transform: 'translateX(-50%)',
+                                  background: 'rgba(30,30,40,0.95)',
+                                  color: '#fbbf24',
+                                  fontWeight: 700,
+                                  fontSize: '13px',
+                                  padding: '2px 10px',
+                                  borderRadius: '8px',
+                                  boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                                  border: '1.5px solid #fbbf24',
+                                  pointerEvents: 'none',
+                                  zIndex: 20,
+                                  whiteSpace: 'nowrap'
+                                }}>Blue Gem</div>
+                                <img src="/images/gem-blue.png" alt="Blue Gem" style={{ width: 28, height: 28, zIndex: 1 }} />
+                              </div>
+                            );
+                          }
                           return (
                             <div
                               key={`cell-${x}-${y}`}
@@ -2096,40 +2349,29 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                                 </span>
                               )}
                               {isDecoy && (
-                                <div style={{ 
+                                <div style={{
                                   position: 'absolute',
-                                  top: '50%',
-                                  left: '50%',
-                                  transform: 'translate(-50%, -50%)',
-                                  zIndex: 1000 
+                                  left: decoyPixelPos.x,
+                                  top: decoyPixelPos.y,
+                                  zIndex: 1000,
+                                  width: '120px',
+                                  height: '80px',
+                                  overflow: 'visible',
+                                  pointerEvents: 'none',
+                                  transition: 'none',
                                 }}>
-                                  {/* Direct image implementation for decoy */}
                                   <img 
                                     src={`/assets/characters/assasin-wolf/${decoyState === 'idle' ? 'Idle' : 'Walk'}_${
                                       decoyDirection.charAt(0).toUpperCase() + decoyDirection.slice(1)
                                     }/00${decoyFrame}.png`}
                                     alt={`Decoy ${decoyState} ${decoyDirection}`}
                                     style={{
-                                      width: '40px',
-                                      height: '40px',
-                                      imageRendering: 'pixelated'
+                                      width: '90px',
+                                      height: '80px',
+                                      imageRendering: 'pixelated',
+                                      objectFit: 'fill',
                                     }}
                                   />
-                                  
-                                  {/* Debug info */}
-                                  <div style={{
-                                    position: 'absolute',
-                                    bottom: '-20px',
-                                    left: '0',
-                                    background: 'rgba(0,0,0,0.7)',
-                                    color: 'white',
-                                    fontSize: '10px',
-                                    padding: '2px',
-                                    width: '100%',
-                                    textAlign: 'center'
-                                  }}>
-                                    {decoyState}-{decoyDirection}
-                                  </div>
                                 </div>
                               )}
                               {x}.{y}
@@ -2289,8 +2531,6 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                   onShowSolution={showSolution}
                   isRunning={isRunning}
                   level={activeLessonId || 1}
-                  currentExecutingLine={currentExecutingLine}
-                  codeLines={codeLines}
                   placeholder={codePlaceholder}
                   />
                 
@@ -2338,10 +2578,11 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
                     onClick={() => {
                       setIsSuccess(false);
                       setPlayVictorySound(false);
+                      resetGame();
                     }}
                     className="w-1/2 px-4 py-3 rounded-lg text-md font-medium bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center"
                   >
-                    Play Again
+                    Try Again
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
@@ -3052,24 +3293,7 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
           <div style={{ color: 'white', fontSize: '40px', textShadow: '2px 2px 8px #000' }}>👹</div>
         </div>
       ))}
-      {/* Add this after the Position display div at the bottom of the screen */}
-      <div style={{
-        position: 'fixed',
-        bottom: '100px',
-        right: '20px',
-        width: '100px',
-        height: '100px',
-        border: '2px solid red',
-        backgroundColor: 'blue',
-        color: 'white',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        fontWeight: 'bold',
-        zIndex: 9999
-      }}>
-        DECOY DEBUG
-      </div>
+
       {/* Death screen overlay - positioned over the entire viewport */}
       {isDead && (
         <div className="fixed inset-0 bg-black bg-opacity-80 z-[9999] flex flex-col items-center justify-center">
@@ -3087,6 +3311,81 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
               Try Again
             </button>
           </div>
+        </div>
+      )}
+      {activeLessonId === 11 && LESSON11_GEMS.map((gem, index) => (
+        <div
+          key={`gem-${index}`}
+          style={{
+            position: 'absolute',
+            left: `calc(${gem.x * 6.66}% + 35px)`,
+            top: `calc(${gem.y * 6.66}% + 32px)`,
+            width: '60px',
+            height: '60px',
+            backgroundColor: 'rgba(255, 255, 255, 0.85)',
+            border: '4px solid yellow',
+            borderRadius: '8px',
+            zIndex: 999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transform: 'translate(-50%, -100%)',
+            fontWeight: 'bold',
+            boxShadow: '0 0 16px 4px #FFD700',
+            pointerEvents: 'none',
+          }}
+        >
+          <div style={{ color: 'white', fontSize: '40px', textShadow: '2px 2px 8px #000' }}>💎</div>
+        </div>
+      ))}
+      {/* When lesson 12 is activated, set the player start position to (7, 14) */}
+      {activeLessonId === 12 && (
+        <div
+          style={{
+            position: 'absolute',
+            left: `calc(${characterPosition.x * 6.66}% + 35px)`,
+            top: `calc(${characterPosition.y * 6.66}% + 32px)`,
+            width: '60px',
+            height: '60px',
+            backgroundColor: 'rgba(255, 255, 255, 0.85)',
+            border: '4px solid yellow',
+            borderRadius: '8px',
+            zIndex: 999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transform: 'translate(-50%, -100%)',
+            fontWeight: 'bold',
+            boxShadow: '0 0 16px 4px #FFD700',
+            pointerEvents: 'none',
+          }}
+        >
+          <div style={{ color: 'white', fontSize: '40px', textShadow: '2px 2px 8px #000' }}>💎</div>
+        </div>
+      )}
+      {/* Add collection logic for lesson 12 gem */}
+      {activeLessonId === 12 && characterPosition.x === 4 && characterPosition.y === 8 && !lesson12GemCollected && (
+        <div
+          style={{
+            position: 'absolute',
+            left: `calc(${characterPosition.x * 6.66}% + 35px)`,
+            top: `calc(${characterPosition.y * 6.66}% + 32px)`,
+            width: '60px',
+            height: '60px',
+            backgroundColor: 'rgba(255, 255, 255, 0.85)',
+            border: '4px solid yellow',
+            borderRadius: '8px',
+            zIndex: 999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transform: 'translate(-50%, -100%)',
+            fontWeight: 'bold',
+            boxShadow: '0 0 16px 4px #FFD700',
+            pointerEvents: 'none',
+          }}
+        >
+          <div style={{ color: 'white', fontSize: '40px', textShadow: '2px 2px 8px #000' }}>💎</div>
         </div>
       )}
     </div>

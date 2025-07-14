@@ -11,8 +11,6 @@ interface CodeEditorProps {
   onShowSolution: () => void;
   isRunning?: boolean;
   level: number;
-  currentExecutingLine?: number;
-  codeLines?: string[];
   placeholder?: string;
 }
 
@@ -25,8 +23,6 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   onShowSolution,
   isRunning = false,
   level,
-  currentExecutingLine = -1,
-  codeLines = [],
   placeholder = ''
 }) => {
   const editorRef = useRef<any>(null);
@@ -63,57 +59,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     }, 100);
   };
   
-  // External Execution Line Highlighter Component
-  const LineHighlighter = ({ currentLine, totalLines }: { currentLine: number, totalLines: number }) => {
-    if (currentLine < 0) return null;
-    
-    // Hard-coded values that seem to work well for Monaco
-    const LINE_HEIGHT = 19;
-    const TOP_OFFSET = -1; // Reduced from 4 to -2 to move everything up a bit
-    
-    // Calculate positions
-    const getLineTop = (line: number) => TOP_OFFSET + (line * LINE_HEIGHT);
-    
-    return (
-      <div className="absolute left-0 top-0 right-0 bottom-0 pointer-events-none">
-        {/* Completed lines */}
-        {Array.from({ length: currentLine }).map((_, index) => (
-          <div 
-            key={`completed-line-${index}`}
-            className="absolute left-0 right-0"
-            style={{
-              top: `${getLineTop(index)}px`,
-              height: `${LINE_HEIGHT}px`,
-              backgroundColor: 'rgba(40, 167, 69, 0.2)',
-              borderLeft: '2px solid rgba(40, 167, 69, 0.7)',
-              zIndex: 1
-            }}
-          />
-        ))}
-        
-        {/* Current executing line */}
-        <div 
-          className="absolute left-0 right-0"
-          style={{
-            top: `${getLineTop(currentLine)}px`,
-            height: `${LINE_HEIGHT}px`,
-            backgroundColor: 'rgba(255, 215, 0, 0.35)',
-            borderLeft: '2px solid rgba(255, 180, 0, 1)',
-            boxShadow: '0 0 2px rgba(0, 0, 0, 0.1)',
-            zIndex: 2,
-            animation: 'pulse-line 1.2s infinite alternate'
-          }}
-        >
-          <div 
-            className="absolute top-0 bottom-0 flex items-center"
-            style={{ left: '5px' }}
-          >
-            <span className="text-yellow-800 font-bold">→</span>
-          </div>
-        </div>
-      </div>
-    );
-  };
+  // Line highlighter removed
   
   return (
     <div className="bg-gray-900 rounded-lg overflow-hidden shadow-2xl">
@@ -191,18 +137,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
           }}
         />
         
-        {/* Line highlighter overlay - only show when running */}
-        {isRunning && (
-          <LineHighlighter currentLine={currentExecutingLine} totalLines={codeLines.length} />
-        )}
-        
-        {/* CSS animations */}
-        <style>{`
-          @keyframes pulse-line {
-            from { background-color: rgba(255, 215, 0, 0.25); }
-            to { background-color: rgba(255, 215, 0, 0.45); }
-          }
-        `}</style>
+        {/* Line highlighter removed */}
       </div>
 
       {/* Controls */}

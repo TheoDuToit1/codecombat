@@ -155,11 +155,11 @@ export const X_CODE_LESSONS = [
     id: 4,
     lessonNumber: 4,
     title: "Waypoint Challenge",
-    description: "Reach all four waypoints in only 4 moves using multi-step movement. Each move must use a number in the brackets.",
+    description: "Visit all four star waypoints using multi-step movement. Each move must use a number in the brackets.",
     codeExample: "hero.moveDown(3)\nhero.moveLeft(3)\nhero.moveUp(9)\nhero.moveRight(4)",
     solution: "hero.moveDown(3)\nhero.moveLeft(3)\nhero.moveUp(9)\nhero.moveRight(4)",
     goals: [
-      "Reach all four waypoints in order: (11,14) → (8,14) → (8,5) → (12,5)",
+      "Reach all four waypoints (visit all 4 stars)",
       "Use exactly 4 movement commands, each with a number in the brackets."
     ],
     concept: "Movement",
@@ -167,8 +167,8 @@ export const X_CODE_LESSONS = [
     estimatedTime: 12,
     hints: [
       "Use hero.moveUp(n), hero.moveDown(n), hero.moveLeft(n), or hero.moveRight(n) with a number to move multiple spaces.",
-      "You must use exactly 4 movement commands to reach all waypoints in order.",
-      "Try to plan your path before coding!"
+      "You must use exactly 4 movement commands to visit all star waypoints.",
+      "Try to plan your path before coding - any path that visits all stars is valid!"
     ],
     unlocks: "",
     week: 1,
@@ -383,7 +383,7 @@ export const X_CODE_LESSONS = [
     title: "Long Steps",
     description: "Using movement commands with arguments.",
     codeExample: "# This is a concept challenge level about arguments.\n# Grab the gems and go to the exit.\n# Your code should have no more than 7 commands.\n# Use movement commands with arguments.\n\n",
-    solution: "# This is a concept challenge level about arguments.\n# Grab the gems and go to the exit.\n# Your code should have no more than 7 commands.\n# Use movement commands with arguments.\nhero.moveRight(1)\nhero.moveUp(3)\nhero.moveRight(2)\nhero.moveDown(3)\nhero.moveLeft(1)\nhero.moveUp(2)\nhero.moveRight(3)",
+    solution: "hero.moveLeft(3)\nhero.moveUp(6)\nhero.moveRight(3)\nhero.moveUp(7)",
     goals: [
       "Use arguments in movement.",
       "Collect all gems.",
