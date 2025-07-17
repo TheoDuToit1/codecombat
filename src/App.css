@@ -1,0 +1,416 @@
+/* App.css - Basic styling for the application */
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* Game container styles */
+.game-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Add keyframes for fadeOut animation */
+@keyframes fadeOut {
+  from {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+
+/* Specific classes for inline highlighting */
+.current-line-bg {
+  background-color: rgba(255, 193, 7, 0.6) !important;
+  width: 100% !important;
+  display: inline-block !important;
+}
+
+.current-line-bg-inline {
+  background-color: rgba(255, 193, 7, 0.6) !important;
+  display: inline-block !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.current-line-inline {
+  color: white !important;
+  font-weight: bold !important;
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.5) !important;
+}
+
+.completed-line-inline {
+  background-color: rgba(40, 167, 69, 0.2) !important;
+}
+
+/* Special container for highlighting */
+.monaco-highlight-container .monaco-editor .monaco-scrollable-element {
+  will-change: transform;
+}
+
+/* Monaco Editor line highlighting styles - with stronger visibility */
+.monaco-editor .view-lines .view-line {
+  transition: all 0.3s ease;
+}
+
+/* MORE SPECIFIC SELECTORS FOR MONACO EDITOR */
+/* These stronger selectors ensure highlighting works */
+.monaco-editor .monaco-scrollable-element .monaco-editor-background,
+.monaco-editor .lines-content.monaco-editor-background {
+  background-color: #1a1a1a !important;
+}
+
+/* Active line highlighting - very visible yellow background */
+.monaco-editor .view-lines .view-line.current-line-highlight,
+.executing-code .monaco-editor .view-line.current-line-highlight,
+.current-line-highlight,
+.monaco-editor .current-line,
+.monaco-editor .view-overlays .current-line,
+.monaco-editor .margin-view-overlays .current-line-margin {
+  background-color: rgba(255, 193, 7, 0.6) !important;
+  border-left: 5px solid #FFC107 !important;
+  font-weight: bold !important;
+  box-shadow: 0 0 8px rgba(255, 193, 7, 0.4) !important;
+  color: white !important;
+  width: 100% !important;
+}
+
+/* Make all text in highlighted line bold and more visible */
+.current-line-highlight * {
+  font-weight: bold !important;
+  color: white !important;
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Add important styles to make sure highlighting works */
+.monaco-editor .lines-content .view-lines .view-line span {
+  background-color: inherit !important;
+}
+
+.monaco-editor .lines-content .view-lines .view-line.current-line-highlight span {
+  background-color: rgba(255, 193, 7, 0.6) !important;
+}
+
+/* Override Monaco's internal styles */
+.monaco-editor .view-overlays .view-line {
+  background-color: transparent !important;
+}
+
+.monaco-editor .view-overlays .view-line.current-line {
+  background-color: rgba(255, 193, 7, 0.6) !important;
+  border-left: 5px solid #FFC107 !important;
+}
+
+/* Current line glyph indicator (play triangle) */
+.monaco-editor .margin-view-overlays .current-line-glyph:before {
+  content: "▶";
+  color: #FFC107;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  margin-left: 5px;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+}
+
+/* Completed lines - green background */
+.monaco-editor .view-lines .view-line.completed-line-highlight,
+.executing-code .monaco-editor .view-line.completed-line-highlight,
+.completed-line-highlight,
+.monaco-editor .view-overlays .completed-line {
+  background-color: rgba(40, 167, 69, 0.2) !important;
+  border-left: 3px solid #28a745 !important;
+  width: 100% !important;
+}
+
+/* Line numbers styling */
+.monaco-editor .margin .line-numbers {
+  color: #9ca3af !important;
+}
+
+/* Active line number */
+.monaco-editor .margin .line-numbers.active-line-number {
+  color: #FFC107 !important;
+  font-weight: bold !important;
+  background-color: rgba(255, 193, 7, 0.2) !important;
+}
+
+/* Pulse animation for currently executing line */
+@keyframes pulse-line {
+  0% {
+    background-color: rgba(255, 193, 7, 0.4);
+    border-left-color: #FFC107;
+  }
+  50% {
+    background-color: rgba(255, 193, 7, 0.7);
+    border-left-color: #FFD700;
+  }
+  100% {
+    background-color: rgba(255, 193, 7, 0.4);
+    border-left-color: #FFC107;
+  }
+}
+
+/* Apply animation to highlighted line */
+.monaco-editor .view-lines .view-line.current-line-highlight,
+.executing-code .monaco-editor .current-line-highlight {
+  animation: pulse-line 1.5s infinite !important;
+}
+
+/* Highlight decorator to ensure it's working with Monaco editor */
+.monaco-editor .decorationsOverviewRuler {
+  z-index: 1;
+}
+
+/* Additional selectors to force background highlighting */
+.monaco-editor-background .view-line.current-line-highlight {
+  background-color: rgba(255, 193, 7, 0.6) !important;
+}
+
+.monaco-editor .decorationHighlight {
+  background-color: rgba(255, 193, 7, 0.6) !important;
+}
+
+/* Ensure line decoration stretches full width */
+.monaco-editor .view-overlays .current-line {
+  width: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
+  position: absolute !important;
+}
+
+/* Add other app styles here */ 
+
+/* Monaco Editor Execution Highlighting */
+.monaco-editor .monaco-active-line {
+  background-color: rgba(255, 193, 7, 0.8) !important;
+  font-weight: bold !important;
+  position: relative;
+  z-index: 10;
+}
+
+.monaco-editor .monaco-completed-line {
+  background-color: rgba(40, 167, 69, 0.3) !important;
+}
+
+/* Target the specific line decoration elements */
+.monaco-editor .view-overlays .view-line {
+  background: transparent !important;
+}
+
+.monaco-editor .view-overlays .current-line,
+.monaco-editor .view-overlays .view-line.monaco-active-line {
+  background-color: rgba(255, 193, 7, 0.8) !important;
+}
+
+.monaco-editor .view-overlays .view-line.monaco-completed-line {
+  background-color: rgba(40, 167, 69, 0.3) !important;
+}
+
+/* Ensure the glyph marker appears */
+.monaco-editor .margin-view-overlays .active-line-glyph::before,
+.monaco-editor .margin-view-overlays .monaco-active-line-glyph::before {
+  content: "▶";
+  color: #ff8c00;
+  font-size: 14px;
+  font-weight: bold;
+  position: absolute;
+  left: 5px;
+}
+
+/* Animation for the current line */
+@keyframes pulse-highlight {
+  from { background-color: rgba(255, 193, 7, 0.6); }
+  to { background-color: rgba(255, 193, 7, 0.8); }
+}
+
+.monaco-editor .view-overlays .view-line.monaco-active-line {
+  animation: pulse-highlight 1s infinite alternate;
+} 
+
+/* Add these styles to ensure line highlighting works */
+.monaco-editor .view-line.monaco-active-line,
+.monaco-editor .decorationsOverviewRuler .monaco-active-line {
+  background-color: #ffca28 !important;
+  font-weight: bold !important;
+}
+
+.monaco-editor .view-line.monaco-completed-line {
+  background-color: rgba(40, 167, 69, 0.25) !important;
+}
+
+/* Apply to Monaco's internal elements */
+.monaco-editor .view-overlays .view-line {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Target Monaco's internal class for line decoration */
+.monaco-editor .view-overlays .current-line,
+.monaco-editor .view-overlays .line-decoration {
+  width: 100% !important;
+}
+
+/* Glyph marker in the margin */
+.monaco-editor .margin-view-overlays .active-line-glyph::before,
+.monaco-editor .margin-view-overlays .monaco-active-line-glyph::before {
+  content: "▶";
+  color: #ff8c00;
+  font-size: 14px;
+  position: absolute;
+  left: 5px;
+} 
+
+/* Reset any previous Monaco editor styling */
+.monaco-editor .view-line {
+  background: transparent !important;
+}
+
+/* IMPORTANT: Monaco Editor Line Highlighting Styles */
+.monaco-editor.executing-code .view-line.monaco-active-line,
+.monaco-editor.executing-code div[class*="view-line"][class*="monaco-active-line"],
+.monaco-editor.executing-code .current-line {
+  background-color: #ffd700 !important; /* Bright gold yellow */
+  width: 100% !important;
+  border-radius: 0 !important;
+}
+
+.monaco-editor.executing-code .view-line.monaco-completed-line,
+.monaco-editor.executing-code div[class*="view-line"][class*="monaco-completed-line"] {
+  background-color: rgba(40, 167, 69, 0.3) !important; /* Green */
+  width: 100% !important;
+}
+
+/* Add a vertical marker in the margin */
+.monaco-editor.executing-code .margin-view-overlays .active-line-glyph::before,
+.monaco-editor.executing-code .margin-view-overlays .monaco-active-line-glyph::before {
+  content: "▶";
+  color: #ffd700;
+  font-size: 12px;
+  position: absolute;
+  left: 2px;
+  font-weight: bold;
+}
+
+/* Create pulsing animation for active line */
+@keyframes pulse-highlight {
+  0% { background-color: #ffd700; }
+  50% { background-color: #ffec8a; }
+  100% { background-color: #ffd700; }
+}
+
+.monaco-editor.executing-code .view-line.monaco-active-line,
+.monaco-editor.executing-code div[class*="view-line"][class*="monaco-active-line"] {
+  animation: pulse-highlight 1.5s infinite;
+}
+
+/* Direct code line targeting - more specific */
+.editor-wrapper .monaco-editor.executing-code .view-line[data-line-number="1"],
+.editor-wrapper .monaco-editor.executing-code .view-line[data-line-number="2"],
+.editor-wrapper .monaco-editor.executing-code .view-line[data-line-number="3"],
+.editor-wrapper .monaco-editor.executing-code .view-line[data-line-number="4"],
+.editor-wrapper .monaco-editor.executing-code .view-line[data-line-number="5"],
+.editor-wrapper .monaco-editor.executing-code .view-line[data-line-number="6"],
+.editor-wrapper .monaco-editor.executing-code .view-line[data-line-number="7"],
+.editor-wrapper .monaco-editor.executing-code .view-line[data-line-number="8"],
+.editor-wrapper .monaco-editor.executing-code .view-line[data-line-number="9"],
+.editor-wrapper .monaco-editor.executing-code .view-line[data-line-number="10"] {
+  width: 100% !important;
+} 
+
+/* !IMPORTANT - Monaco Line Highlighting Override */
+
+/* First clear all existing Monaco decorations */
+.monaco-editor .view-line,
+.monaco-editor .current-line,
+.monaco-editor .line-decoration,
+.monaco-editor .margin-view-overlays {
+  background: transparent !important;
+}
+
+/* The most specific approach for active line */
+.monaco-editor.executing-code .view-lines .view-line[data-line-number] {
+  position: relative;
+  z-index: 1;
+}
+
+/* Create a full-width highlight that sits behind the text */
+.monaco-editor.executing-code .view-line.monaco-active-line::before,
+.monaco-editor.executing-code .view-line[data-line-number].monaco-active-line::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background-color: #ffd700 !important;
+  z-index: -1;
+  width: 100vw !important;
+  max-width: 100vw !important;
+}
+
+/* Add the same approach for completed lines */
+.monaco-editor.executing-code .view-line.monaco-completed-line::before,
+.monaco-editor.executing-code .view-line[data-line-number].monaco-completed-line::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background-color: rgba(40, 167, 69, 0.3) !important;
+  z-index: -1;
+  width: 100vw !important;
+  max-width: 100vw !important;
+}
+
+/* Add animation for active line */
+@keyframes pulse-highlight {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+.monaco-editor.executing-code .view-line.monaco-active-line::before,
+.monaco-editor.executing-code .view-line[data-line-number].monaco-active-line::before {
+  animation: pulse-highlight 1.5s infinite;
+}
+
+/* Add marker in margin */
+.monaco-editor.executing-code .margin-view-overlays .current-line,
+.monaco-editor.executing-code .margin-view-overlays .active-line,
+.monaco-editor.executing-code .margin-view-overlays .active-line-glyph {
+  position: relative;
+}
+
+.monaco-editor.executing-code .margin-view-overlays .current-line::after,
+.monaco-editor.executing-code .margin-view-overlays .active-line::after,
+.monaco-editor.executing-code .margin-view-overlays .active-line-glyph::after {
+  content: "▶";
+  color: #ffd700;
+  font-size: 12px;
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  font-weight: bold;
+}
+
+/* Full width overrides - !important these to defeat Monaco's CSS */
+.monaco-editor .view-lines {
+  width: 100% !important;
+}
+
+.monaco-editor .view-line {
+  width: 100% !important;
+  min-width: 100% !important;
+  position: relative !important;
+} 

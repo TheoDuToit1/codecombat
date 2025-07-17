@@ -1,0 +1,110 @@
+/* Lesson animations and effects */
+
+/* Confetti animation */
+@keyframes confetti-fall {
+  0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(600px) rotate(360deg); opacity: 0; }
+}
+
+.confetti {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  z-index: 1000;
+  animation: confetti-fall 4s ease-out forwards;
+}
+
+/* Success message animation */
+@keyframes success-appear {
+  0% { transform: scale(0.5); opacity: 0; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.success-message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  background: linear-gradient(45deg, #10b981, #059669);
+  color: white;
+  font-size: 2.5rem;
+  font-weight: bold;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+  animation: success-appear 0.8s ease-out forwards;
+  text-align: center;
+}
+
+/* Next lesson button animation */
+@keyframes button-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.next-lesson-button {
+  animation: button-pulse 1.5s infinite;
+  transition: all 0.3s ease;
+}
+
+.next-lesson-button:hover {
+  transform: scale(1.05);
+  animation: none;
+}
+
+/* Glowing green button for Run Code */
+@keyframes glowingGreen {
+  0% { box-shadow: 0 0 5px rgba(34, 197, 94, 0.5); }
+  50% { box-shadow: 0 0 20px rgba(34, 197, 94, 0.8); }
+  100% { box-shadow: 0 0 5px rgba(34, 197, 94, 0.5); }
+}
+
+.glowing-green-button {
+  animation: glowingGreen 2s ease-in-out infinite;
+  transition: all 0.3s ease;
+}
+
+/* Flashing message for notifications */
+@keyframes flashingGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.flashing-orange-gradient {
+  background: linear-gradient(45deg, #f97316, #fb923c, #fdba74, #fb923c, #f97316);
+  background-size: 200% 200%;
+  animation: flashingGradient 1.5s ease infinite;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+  padding: 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+/* Zoom effect for emphasis */
+@keyframes zoom-effect {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.zoom-effect {
+  animation: zoom-effect 1s ease;
+  display: inline-block;
+}
+
+/* Waypoint marker animation */
+@keyframes waypoint-pulse {
+  0% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.7; }
+}
+
+.waypoint-marker {
+  animation: waypoint-pulse 2s infinite;
+} 

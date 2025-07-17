@@ -1,0 +1,22 @@
+{
+  "projectName": "X-Code Game",
+  "version": "1.0.0",
+  "paths": {
+    "auto": "./src/auto",
+    "enemies": "./src/enemies",
+    "collectibles": "./src/collectibles",
+    "sprites": "./src/assets/sprites",
+    "game": "./src/game"
+  },
+  "hero": {
+    "defaultRef": "hero",
+    "pattern": "gauntletState\\.hero|hero\\b"
+  },
+  "gameLoop": {
+    "path": "./src/game/GameLoop.ts",
+    "insertPattern": "gameObjects\\.push\\((.*?)\\)"
+  },
+  "spriteLibrary": {
+    "path": "./src/game/SpriteLibrary.ts"
+  }
+} 

@@ -1,0 +1,1505 @@
+// XCodeAcademy Component
+import React, { useState, useEffect, useRef } from 'react';
+import { BookOpen, ChevronRight, Star, Play } from 'lucide-react';
+import { X_CODE_LESSONS } from '../data/X_CODE_LESSONS';
+import { useParams, useNavigate } from 'react-router-dom';
+import { CodeEditor } from './CodeEditor';
+import { GameGridHandle } from './GameGrid';
+import { loadCharacterAnimations } from '../utils/loadCharacterAnimations';
+import { AnimatedCharacter } from './AnimatedCharacter';
+import { LessonBackground } from './LessonBackground';
+// Import our styles
+import '../styles/lessonAnimations.css';
+import LoadingScreen from './LoadingScreen';
+import Decoy from './Decoy';
+
+// Define the XCodeLesson interface
+interface XCodeLesson {
+  id: number;
+  title: string;
+  week: number;
+  difficulty: number;
+  goals?: string[];
+  hints?: string[];
+  solution?: string; // Changed from solutionCode to solution
+}
+
+// Add these missing variable declarations before the XCodeAcademy component
+const decoyPosition = { x: 11, y: 11 }; // Default position for decoy
+const weekGroups = [1, 2, 3, 4, 5, 6]; // List of available week groups
+const weekLessons = X_CODE_LESSONS.filter(lesson => lesson.week === 1); // Lessons for the selected week
+
+// Add CSS keyframes for animations
+const animationStyles = `
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+  
+  @keyframes zoomInOut {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+  
+  .zoom-effect {
+    animation: zoomInOut 1s ease;
+    display: inline-block;
+  }
+  
+  @keyframes flashingGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  .flashing-orange-gradient {
+    background: linear-gradient(45deg, #f97316, #fb923c, #fdba74, #fb923c, #f97316);
+    background-size: 200% 200%;
+    animation: flashingGradient 1.5s ease infinite;
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+`;
+
+// Helper functions
+const getWeekTheme = (week: number): string => {
+  return `Week ${week}: Programming Basics`;
+};
+
+const renderDifficultyStars = (difficulty: number): JSX.Element => {
+  return (
+    <div className="flex">
+      {[...Array(difficulty)].map((_, i) => (
+        <Star key={i} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+      ))}
+      {[...Array(5 - difficulty)].map((_, i) => (
+        <Star key={i + difficulty} className="w-4 h-4 text-gray-400" />
+      ))}
+    </div>
+  );
+};
+
+interface XCodeAcademyProps {
+  onBack?: () => void;
+  currentProgress?: number;
+  showCoursesView?: boolean;
+  onStartLessonLevel?: (lessonId: number) => void;
+}
+
+// Define weekly themes for better display
+const WEEK_THEMES = {
+  1: "First Steps",
+  2: "Basic Loops",
+  3: "Functions & Organization",
+  4: "Basic Data Structures",
+  5: "Review and Mastery"
+};
+
+// Helper to determine if a lesson is CS1
+const isCS1Lesson = (lesson: XCodeLesson | any): lesson is XCodeLesson => {
+  return lesson && typeof lesson.id === 'number' && typeof lesson.title === 'string';
+};
+
+// Simple lesson data
+const LESSON_DATA = {
+  1: {
+    title: "Moving Your Hero",
+    description: "Learn to move your hero with code",
+    objectives: ["Understand character control and screen orientation"],
+    hints: ["Use hero.moveRight() to move your hero to the right"],
+    codeExample: "hero.moveRight()"
+  }
+};
+
+// Helper function to highlight syntax
+const highlightCode = (code: string) => {
+  return code
+    .replace(/hero\./g, '<span style="color: #93c5fd;">hero</span>.')
+    .replace(/moveRight|moveLeft|moveUp|moveDown/g, match => 
+      `<span style="color: #f87171;">${match}</span>`
+    )
+    .replace(/\((\d*)\)/g, '(<span style="color: #fbbf24;">$1</span>)');
+};
+
+// Add level goals data
+const levelGoals = {
+  1: [
+    "Move your hero to the right side of the grid",
+    "Learn to use basic movement commands",
+    "Reach position (9,5) to complete the level"
+  ]
+};
+
+// Helper function to create placeholder code with missing letters
+const createPlaceholderWithMissingLetters = (code: string, lessonNumber: number): string => {
+  if (!code) return '';
+  
+  // Split the code into lines
+  const lines = code.split('\n');
+  
+  // Calculate difficulty factor based on lesson number (higher level = less help)
+  // Lesson 1-5: Easier (more letters shown)
+  // Lesson 6-10: Medium difficulty
+  // Lesson 11+: Harder (fewer letters shown)
+  const baseDifficulty = lessonNumber <= 5 ? 0.4 : 
+                         lessonNumber <= 10 ? 0.6 : 0.75;
+  
+  // Process each line to remove some letters
+  return lines.map(line => {
+    // Skip empty lines
+    if (line.trim() === '') return line;
+    
+    // For function/method calls like hero.moveUp(), remove letters from the method name
+    return line.replace(/(\w+)\.(\w+)(\(\)|\(.*\))/g, (match, obj, method, parens) => {
+      // Keep the first letter and remove varying percentage of the remaining letters
+      const firstLetter = method[0];
+      const restOfMethod = method.slice(1);
+      
+      // Create gaps with at least 2-3 missing letters
+      const maskedRest = restOfMethod.split('').map((char: string, i: number) => {
+        // Remove letters based on difficulty factor and position
+        // Ensure at least 2-3 gaps for early levels, more for higher levels
+        const shouldRemove = Math.random() < baseDifficulty || 
+                            (i % 2 === 0 && i < restOfMethod.length - 1 && Math.random() < 0.5);
+        return shouldRemove ? '_' : char;
+      }).join('');
+      
+      return `${obj}.${firstLetter}${maskedRest}${parens}`;
+    });
+  }).join('\n');
+};
+
+// Add at the top of the file, after imports:
+function manhattan(a: {x: number, y: number}, b: {x: number, y: number}): number {
+  return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+}
+function stepToward(from: {x: number, y: number}, to: {x: number, y: number}): {x: number, y: number} {
+  if (from.x !== to.x) {
+    return { x: from.x + Math.sign(to.x - from.x), y: from.y };
+  } else if (from.y !== to.y) {
+    return { x: from.x, y: from.y + Math.sign(to.y - from.y) };
+  }
+  return { ...from };
+}
+
+// Helper to get goblin direction (N, S, E, W) from movement
+function getGoblinDirection(from: {x: number, y: number}, to: {x: number, y: number}): string {
+  if (Math.abs(to.x - from.x) > Math.abs(to.y - from.y)) {
+    return to.x > from.x ? '0.0' : '180.0'; // right or left
+  } else if (to.y !== from.y) {
+    return to.y > from.y ? '270.0' : '90.0'; // down or up
+  }
+  return '270.0'; // default to down
+}
+
+// Add BFS pathfinding helper
+function bfsPath(start: {x: number, y: number}, goal: {x: number, y: number}, isBlocked: (x: number, y: number) => boolean): {x: number, y: number}[] | null {
+  const queue: {x: number, y: number, path: {x: number, y: number}[]}[] = [{ x: start.x, y: start.y, path: [] }];
+  const visited = new Set<string>();
+  const key = (x: number, y: number) => `${x},${y}`;
+  visited.add(key(start.x, start.y));
+  const dirs = [
+    { dx: 1, dy: 0 },
+    { dx: -1, dy: 0 },
+    { dx: 0, dy: 1 },
+    { dx: 0, dy: -1 }
+  ];
+  while (queue.length > 0) {
+    const { x, y, path } = queue.shift()!;
+    if (x === goal.x && y === goal.y) return [...path, { x, y }];
+    for (const { dx, dy } of dirs) {
+      const nx = x + dx, ny = y + dy;
+      if (!visited.has(key(nx, ny)) && !isBlocked(nx, ny) && nx >= 0 && ny >= 0 && nx < 15 && ny < 15) {
+        visited.add(key(nx, ny));
+        queue.push({ x: nx, y: ny, path: [...path, { x, y }] });
+      }
+    }
+  }
+  return null;
+}
+
+// Add at the very top of the file, before any code:
+declare global {
+  interface Window {
+    _goblinDebugLogs?: string[];
+    _goblinDebugOverlayInterval?: any;
+  }
+}
+
+const XCodeAcademy: React.FC<XCodeAcademyProps> = ({ 
+  onBack,
+  currentProgress: initialProgress = 3, // Default to lesson 3 being completed
+  showCoursesView = true, // Default to showing the courses view
+  onStartLessonLevel
+}) => {
+  // Get lessonId from URL params
+  const { lessonId } = useParams<{ lessonId: string }>();
+  const lessonIdNum = lessonId ? parseInt(lessonId, 10) : 1;
+  const navigate = useNavigate();
+  
+  const [selectedWeek, setSelectedWeek] = useState<number>(1);
+  const [selectedLesson, setSelectedLesson] = useState<number | null>(null);
+  const [showAllCourses, setShowAllCourses] = useState<boolean>(showCoursesView);
+  const [currentProgress, setCurrentProgress] = useState<number>(initialProgress);
+  const [quizModalOpen, setQuizModalOpen] = useState<number | false>(false);
+  const [achievementsModalOpen, setAchievementsModalOpen] = useState(false);
+  
+  // State for interactive lesson
+  const [isLessonActive, setIsLessonActive] = useState<boolean>(false);
+  const [activeLessonId, setActiveLessonId] = useState<number | null>(null);
+  const [code, setCode] = useState<string>('hero.moveRight()');
+  const [codePlaceholder, setCodePlaceholder] = useState<string>('');
+  const [executionLogs, setExecutionLogs] = useState<string[]>([]);
+  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [currentExecutingLine, setCurrentExecutingLine] = useState<number>(-1);
+  const [codeLines, setCodeLines] = useState<string[]>([]);
+  const [codeError, setCodeError] = useState<string | null>(null);
+  const [isMoving, setIsMoving] = useState<boolean>(false);
+  const [isSuccess, setIsSuccess] = useState<boolean>(false);
+  const [showGoals, setShowGoals] = useState<boolean>(true);
+  const [playVictorySound, setPlayVictorySound] = useState<boolean>(false);
+  
+  // State for character
+  const [characterPosition, setCharacterPosition] = useState(() => {
+    if (lessonIdNum === 9) {
+      return { x: 10, y: 14 };
+    }
+    return { x: 1, y: 5 };
+  });
+  const characterPositionRef = useRef(characterPosition);
+  useEffect(() => {
+    characterPositionRef.current = characterPosition;
+  }, [characterPosition]);
+  const [characterDirection, setCharacterDirection] = useState<'up' | 'down' | 'left' | 'right'>('right');
+  const [characterState, setCharacterState] = useState<'idle' | 'walk' | 'attack'>('idle');
+  
+  // State for goal completion
+  const [completedGoals, setCompletedGoals] = useState<{[key: string]: boolean}>({});
+  
+  // Track which directions have been executed (for lesson 2)
+  const [directionsExecuted, setDirectionsExecuted] = useState({
+    up: false,
+    down: false,
+    left: false,
+    right: false
+  });
+  
+  // Add this near the top of the component
+  const mageSprites = loadCharacterAnimations('mage');
+  
+  // Add state to track moveUp executions for lesson 1
+  const [lesson1MoveUpCount, setLesson1MoveUpCount] = useState(0);
+  
+  // Add state to track if the book has been collected
+  const [bookCollected, setBookCollected] = useState(false);
+  // Add state to track if the potion has been collected
+  const [potionCollected, setPotionCollected] = useState(false);
+  
+  // Add state for gem collection in lesson 7
+  const [blueGemCollected, setBlueGemCollected] = useState(false);
+  const [redGemCollected, setRedGemCollected] = useState(false);
+  
+  // Add state for three gems in lesson 8
+  const [blueGem8Collected, setBlueGem8Collected] = useState(false);
+  const [redGem8Collected, setRedGem8Collected] = useState(false);
+  const [greenGem8Collected, setGreenGem8Collected] = useState(false);
+  
+  // Add to component state:
+  const [lastExecutedLine, setLastExecutedLine] = useState<number>(0);
+  const [lastCodeSnapshot, setLastCodeSnapshot] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingGoals, setLoadingGoals] = useState<string[] | undefined>(undefined);
+  const [loadingBg, setLoadingBg] = useState<string | undefined>(undefined);
+  
+  const gameGridRef = useRef<GameGridHandle>(null);
+  
+  // Add at the top of the component:
+  const [goblinDebugLogs, setGoblinDebugLogs] = useState<string[]>([]);
+
+  // ... at the top of the XCodeAcademy component, add:
+  const [decoyDirection, setDecoyDirection] = useState<'up' | 'down' | 'left' | 'right'>('down');
+  const [decoyState, setDecoyState] = useState<'idle' | 'walk'>('idle');
+  const [decoyAnimFrame, setDecoyAnimFrame] = useState(0);
+
+  // Add a useEffect to animate the decoy frames
+  useEffect(() => {
+    if (activeLessonId !== 10) return;
+    
+    const frameCount = decoyState === 'idle' ? 7 : 8; // 7 frames for idle, 8 for walk
+    const frameDelay = decoyState === 'idle' ? 200 : 120; // slower for idle, faster for walk
+    
+    const interval = setInterval(() => {
+      setDecoyAnimFrame(prev => (prev + 1) % frameCount);
+    }, frameDelay);
+    
+    return () => clearInterval(interval);
+  }, [decoyState, activeLessonId]);
+
+  // Add decoy pixel position state
+  const [decoyPixelPosition, setDecoyPixelPosition] = useState<{x: number, y: number}>({ x: 11 * 60, y: 11 * 60 });
+  useEffect(() => {
+    if (activeLessonId === 10) {
+      setDecoyPixelPosition({ x: decoyPosition.x * 60, y: decoyPosition.y * 60 });
+    }
+  }, [activeLessonId]);
+  useEffect(() => {
+    if (activeLessonId === 10) {
+      setDecoyPixelPosition({ x: decoyPosition.x * 60, y: decoyPosition.y * 60 });
+    }
+  }, [decoyPosition, activeLessonId]);
+
+  // Add level10Enemies state with correct structure
+  const [level10Enemies, setLevel10Enemies] = useState([
+    { 
+      id: 1, 
+      x: 5, 
+      y: 5, 
+      direction: 'right', 
+      state: 'idle', 
+      attackCount: 0, 
+      attackCountHero: 0, 
+      attackCountDecoy: 0,
+      position: { x: 5, y: 5 },
+      animationState: 'idle',
+      attackFrame: 0
+    },
+    { 
+      id: 2, 
+      x: 8, 
+      y: 8, 
+      direction: 'left', 
+      state: 'idle', 
+      attackCount: 0, 
+      attackCountHero: 0, 
+      attackCountDecoy: 0,
+      position: { x: 8, y: 8 },
+      animationState: 'idle',
+      attackFrame: 0
+    }
+  ]);
+
+  // 1. Add state for pending lesson to start after loading
+  const [pendingLessonId, setPendingLessonId] = useState<number | null>(null);
+  const [isDead, setIsDead] = useState(false);
+
+  // Add these missing function declarations inside the component
+  const handleLoadingComplete = (lessonId: number) => {
+    setLoading(false);
+    setIsLessonActive(true);
+    setActiveLessonId(lessonId);
+    setPendingLessonId(null);
+  };
+  
+  const handleStartLessonWithLoading = (lessonId: number) => {
+    console.log('DEBUG: handleStartLessonWithLoading called, setting loading to true');
+    setPendingLessonId(lessonId);
+    setLoading(true);
+    setLoadingProgress(0);
+    setLoadingGoals(['Loading lesson...', 'Preparing game environment...', 'Setting up challenges...']);
+    
+    // Simulate loading progress
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 10;
+      setLoadingProgress(progress);
+      if (progress >= 100) {
+        clearInterval(interval);
+      }
+    }, 150);
+  };
+
+  // Add missing functions
+  const generateStars = () => {
+    const stars = [];
+    for (let i = 0; i < 100; i++) {
+      const x = Math.random() * 100;
+      const y = Math.random() * 100;
+      const size = Math.random() * 3 + 1;
+      const delay = Math.random() * 2;
+      stars.push(
+        <div
+          key={i}
+          className="star"
+          style={{
+            left: `${x}%`,
+            top: `${y}%`,
+            width: `${size}px`,
+            height: `${size}px`,
+            animationDelay: `${delay}s`
+          }}
+        />
+      );
+    }
+    return stars;
+  };
+
+  const handleNextLesson = () => {
+    if (activeLessonId !== null) {
+      const nextLessonId = activeLessonId + 1;
+      setIsSuccess(false);
+      handleStartLessonWithLoading(nextLessonId);
+    }
+  };
+
+  const handleBackToLessons = () => {
+    setIsLessonActive(false);
+    setActiveLessonId(null);
+    setIsSuccess(false);
+    setCode('hero.moveRight()');
+    navigate('/academy-course');
+  };
+
+  const resetGame = () => {
+    setCharacterPosition({ x: 1, y: 5 });
+    setIsRunning(false);
+    setIsSuccess(false);
+    setExecutionLogs([]);
+    setCurrentExecutingLine(-1);
+    setIsDead(false);
+    // Reset any other game state as needed
+  };
+
+  const executeCode = (codeToExecute?: string) => {
+    setIsRunning(true);
+    setCurrentExecutingLine(0);
+    setCodeLines((codeToExecute || code).split('\n'));
+    setExecutionLogs([]);
+    // Code execution logic would go here
+  };
+
+  const showHint = () => {
+    const lesson = X_CODE_LESSONS.find(l => l.id === activeLessonId);
+    if (lesson && lesson.hints) {
+      setExecutionLogs([`Hint: ${lesson.hints[0]}`]);
+    }
+  };
+
+  const showSolution = () => {
+    const lesson = X_CODE_LESSONS.find(l => l.id === activeLessonId);
+    if (lesson && lesson.solution) { // Changed from solutionCode to solution
+      setCode(lesson.solution);
+    }
+  };
+
+  // Reset moveUp counter when code or lesson changes
+  useEffect(() => {
+    // Reset the counter when code changes or lesson changes
+    setLesson1MoveUpCount(0);
+  }, [code, activeLessonId]);
+  
+  // Place this block after all hooks, before any JSX rendering:
+  if (loading) {
+    console.log('Rendering LoadingScreen');
+    return (
+      <LoadingScreen
+        progress={loadingProgress}
+        visible={loading}
+        goals={loadingGoals}
+        backgroundImage={loadingBg}
+        onLoadingComplete={() => {
+          console.log('LoadingScreen complete, calling handleLoadingComplete with pendingLessonId:', pendingLessonId);
+          if (pendingLessonId !== null) handleLoadingComplete(pendingLessonId);
+        }}
+      />
+    );
+  }
+
+  // Effect to check if we're in lesson mode from URL params
+  useEffect(() => {
+    if (lessonId) {
+      const lessonIdNum = parseInt(lessonId, 10);
+      setActiveLessonId(lessonIdNum);
+      setIsLessonActive(true);
+    } else {
+      setActiveLessonId(null);
+      setIsLessonActive(false);
+    }
+  }, [lessonId]);
+
+  // Restore course/lesson selection UI as the default return when not in a lesson
+  if (!isLessonActive) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 flex flex-col">
+        <style>{animationStyles}</style>
+        <header className="flex items-center justify-between px-8 py-6 bg-gradient-to-r from-blue-800 to-indigo-800 shadow-lg">
+          <div className="flex items-center gap-4">
+            <BookOpen className="w-10 h-10 text-yellow-300 animate-pulse" />
+            <h1 className="text-3xl font-extrabold tracking-tight text-white drop-shadow-lg">X-Code Academy</h1>
+          </div>
+          <div className="text-lg text-blue-100 font-mono">{`Progress: ${currentProgress}/160`}</div>
+        </header>
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar: Weeks */}
+          <aside className="w-1/6 min-w-[180px] bg-gradient-to-b from-blue-950 to-indigo-950 border-r border-blue-800 flex flex-col shadow-xl">
+            <div className="p-6 text-xl font-bold border-b border-blue-800 text-yellow-300 flex items-center gap-2">
+              <Star className="w-6 h-6 text-yellow-400 animate-bounce" /> Weeks
+            </div>
+            <nav className="flex-1 overflow-y-auto py-4 space-y-2">
+              {weekGroups.map(week => (
+                <button
+                  key={week}
+                  className={`w-full text-left px-6 py-3 rounded-lg font-semibold flex items-center gap-3 transition-all border-l-4 ${selectedWeek === week ? 'bg-gradient-to-r from-yellow-400 to-yellow-200 text-blue-900 border-yellow-400 shadow-lg scale-105' : 'hover:bg-blue-800 border-transparent text-white'}`}
+                  onClick={() => setSelectedWeek(week)}
+                >
+                  <span className="bg-yellow-400 text-blue-900 rounded-full px-3 py-1 font-bold shadow">{week}</span>
+                  <span className="truncate">{getWeekTheme(week)}</span>
+                </button>
+              ))}
+            </nav>
+          </aside>
+          {/* Main: Lessons Grid */}
+          <main className="w-2/3 flex flex-col bg-gradient-to-br from-blue-900/80 to-indigo-900/80">
+            <div className="p-8 border-b border-blue-800 text-2xl font-extrabold text-yellow-200 flex items-center gap-3">
+              <ChevronRight className="w-7 h-7 text-yellow-300 animate-pulse" /> Lessons
+            </div>
+            <div className="flex-1 overflow-y-auto p-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+              {weekLessons.map(lesson => (
+                <div
+                  key={lesson.id}
+                  className={`rounded-2xl p-6 shadow-2xl transition-all cursor-pointer border-2 flex flex-col justify-between bg-gradient-to-br ${selectedLesson === lesson.id ? 'from-yellow-200 to-yellow-100 border-yellow-400 scale-105' : 'from-blue-800 to-indigo-800 border-blue-700 hover:from-blue-700 hover:to-indigo-700'} group`}
+                  onClick={() => setSelectedLesson(lesson.id)}
+                >
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-2xl font-extrabold text-yellow-400 drop-shadow">{lesson.lessonNumber}</span>
+                      <span className="text-lg font-bold text-blue-100 group-hover:text-yellow-200 transition-all">{lesson.title}</span>
+                    </div>
+                    <div className="flex items-center gap-2 mb-2">
+                      {renderDifficultyStars(lesson.difficulty || 1)}
+                      <span className="text-xs text-blue-200">{lesson.difficulty ? `Difficulty: ${lesson.difficulty}` : ''}</span>
+                    </div>
+                    <div className="text-sm text-blue-200 mb-2 line-clamp-3">{lesson.description}</div>
+                  </div>
+                  <button
+                    className="mt-4 px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-300 text-blue-900 font-bold rounded-lg shadow hover:from-yellow-300 hover:to-yellow-200 transition-all text-md group-hover:scale-105"
+                    onClick={e => { e.stopPropagation(); console.log('Start Lesson button clicked', lesson.id); handleStartLessonWithLoading ? handleStartLessonWithLoading(lesson.id) : onStartLessonLevel && onStartLessonLevel(lesson.id); }}
+                  >
+                    <Play className="inline w-5 h-5 mr-1 -mt-1" /> Start Lesson
+                  </button>
+                </div>
+              ))}
+            </div>
+          </main>
+          {/* Details: Selected Lesson */}
+          <aside className="w-1/4 min-w-[300px] bg-gradient-to-b from-blue-950 to-indigo-950 border-l border-blue-800 flex flex-col shadow-xl">
+            <div className="p-6 text-xl font-bold border-b border-blue-800 text-yellow-300 flex items-center gap-2">
+              <BookOpen className="w-6 h-6 text-yellow-400 animate-bounce" /> Lesson Details
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              {selectedLesson ? (() => {
+                const lesson = X_CODE_LESSONS.find(l => l.id === selectedLesson);
+                if (!lesson) return <div className="text-gray-400">No lesson selected.</div>;
+                return (
+                  <div className="space-y-4">
+                    <div className="text-2xl font-extrabold text-yellow-200 mb-2">Lesson {lesson.lessonNumber}: {lesson.title}</div>
+                    <div className="text-blue-100 mb-2 text-lg">{lesson.description}</div>
+                    {lesson.goals && (
+                      <div className="mb-2">
+                        <div className="font-semibold text-yellow-300 mb-1">Goals:</div>
+                        <ul className="list-disc list-inside text-blue-100 text-md space-y-1">
+                          {lesson.goals.map((goal, i) => <li key={i}>{goal}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {lesson.hints && lesson.hints.length > 0 && (
+                      <div className="mb-2">
+                        <div className="font-semibold text-green-300 mb-1">Hints:</div>
+                        <ul className="list-disc list-inside text-green-100 text-md space-y-1">
+                          {lesson.hints.map((hint, i) => <li key={i}>{hint}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {lesson.codeExample && (
+                      <div className="mb-2">
+                        <div className="font-semibold text-purple-300 mb-1">Example:</div>
+                        <pre className="bg-blue-900 rounded p-3 text-purple-200 text-md whitespace-pre-wrap">{lesson.codeExample}</pre>
+                      </div>
+                    )}
+                    <button
+                      className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-xl font-bold text-lg shadow-lg transition-all duration-200"
+                      onClick={() => { console.log('Start This Lesson button clicked', lesson.id); handleStartLessonWithLoading ? handleStartLessonWithLoading(lesson.id) : onStartLessonLevel && onStartLessonLevel(lesson.id); }}
+                    >
+                      <Play className="inline w-6 h-6 mr-2 -mt-1" /> Start This Lesson
+                    </button>
+                  </div>
+                );
+              })() : <div className="text-gray-400 text-lg">Select a lesson to see details.</div>}
+            </div>
+          </aside>
+        </div>
+      </div>
+    );
+  }
+
+  // Return the interactive lesson view if in lesson mode
+  if (isLessonActive && activeLessonId) {
+    const lessonData = X_CODE_LESSONS.find(l => l.id === activeLessonId) || X_CODE_LESSONS[0];
+    
+    return (
+      <div className="min-h-screen bg-gray-900 text-white">
+        {/* Add style tag for animations */}
+        <style>{animationStyles}</style>
+        
+        {/* Header */}
+        <div className="bg-blue-600 py-4">
+          <div className="container mx-auto px-4 flex items-center">
+            <button 
+              onClick={() => {
+                setIsLessonActive(false);
+                setActiveLessonId(null);
+                if (onBack) onBack();
+              }}
+              className="mr-4 text-white hover:text-blue-200"
+              title="Back to lesson selection"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold">Lesson {lessonData.lessonNumber}: {lessonData.title}</h1>
+              </div>
+              <p className="text-sm text-blue-200">{lessonData.description}</p>
+          </div>
+          </div>
+        </div>
+        
+        {/* Goals dropdown section - moved higher up */}
+        <div className="relative z-50">
+          <div className="absolute top-0 left-0 mt-1">
+                          <div 
+                className={`bg-gray-800 bg-opacity-90 border-r border-y border-gray-700 transition-all duration-500 rounded-r-lg shadow-lg ${
+                  showGoals ? 'w-64' : 'w-44'
+                }`}
+                  style={{
+                  boxShadow: showGoals ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)' : '0 4px 6px -1px rgba(0, 0, 0, 0.2)'
+                }}
+            >
+              <button 
+                onClick={() => setShowGoals(!showGoals)}
+                className={`w-full py-1 px-4 flex items-center justify-between text-white rounded-r-lg ${
+                  showGoals ? 'bg-blue-700' : 'bg-gray-800 hover:bg-gray-700'
+                } transition-colors duration-300`}
+              >
+                <div className="flex items-center overflow-hidden">
+                  <span className={`mr-2 transition-all duration-300 ${showGoals ? 'scale-110' : ''}`}>🎯</span>
+                  <span className={`font-medium transition-all duration-300 ${
+                    showGoals ? 'text-white scale-105 font-bold' : 'text-gray-200'
+                  }`}>Level Goals</span>
+                </div>
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className={`h-5 w-5 transition-all duration-500 ${
+                    showGoals ? 'transform rotate-180 text-white' : 'text-blue-300'
+                  }`}
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              {/* Animated collapsible content */}
+              <div 
+                className={`overflow-hidden transition-all duration-500 ease-in-out ${
+                  showGoals ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                }`}
+              >
+                <div className="px-4 py-2 bg-gray-800 rounded-b-lg">
+                  <ul className="space-y-2">
+                    {lessonData.goals?.map((goal, index) => {
+                      const goalKey = `lesson-${lessonData.id}-goal-${index}`;
+                      const isCompleted = completedGoals[goalKey] || false;
+                      
+                      return (
+                        <li 
+                          key={index} 
+                          className={`text-sm flex items-start ${isCompleted ? 'text-green-300' : 'text-gray-300'}`}
+                          style={{ 
+                            animation: showGoals ? `fadeInRight ${0.3 + index * 0.1}s ease-out` : 'none'
+                  }}
+                  onClick={() => {
+                            // Toggle goal completion status for demo purposes
+                            setCompletedGoals(prev => ({
+                              ...prev,
+                              [goalKey]: !prev[goalKey]
+                            }));
+                          }}
+                        >
+                          <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full mr-2 ${
+                            isCompleted ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+                          }`}>
+                            {isCompleted ? (
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : (
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            )}
+                          </span> 
+                          <span className={isCompleted ? 'line-through opacity-80' : ''}>
+                            {goal}
+                          </span>
+                        </li>
+                      );
+                    }) || (
+                      <li className="text-sm text-gray-300 animate-fadeIn">
+                        <span className="text-green-400 mr-2">•</span> Complete the level objectives
+                      </li>
+                    )}
+                  </ul>
+              </div>
+            </div>
+          </div>
+          </div>
+        </div>
+
+        {/* Add animation keyframes */}
+        <style>{`
+          @keyframes fadeInRight {
+            from {
+              opacity: 0;
+              transform: translateX(-20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateX(0);
+            }
+          }
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+          }
+          @keyframes pulse {
+            0%, 100% {
+              opacity: 1;
+            }
+            50% {
+              opacity: 0.5;
+            }
+          }
+        `}</style>
+
+        {/* Main content area - Make it full height */}
+        <div className="h-[calc(100vh-76px)]">
+          <div className="flex flex-col md:flex-row h-full">
+            {/* Left panel - Game grid with background */}
+            <div className="w-full md:w-2/3 p-4 flex flex-col h-full">
+              {/* Game grid container with background */}
+              <div className="relative w-full h-full rounded-lg overflow-hidden border border-gray-700" style={{ position: 'relative' }}>
+                {/* Background image - use custom for lesson 10 */}
+                {activeLessonId === 10 ? (
+                  <img
+                    src="/images/img-6.png"
+                    alt="Map 10 Background"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      zIndex: 0
+                    }}
+                  />
+                ) : (
+                <LessonBackground lessonNumber={lessonData.lessonNumber} />
+                )}
+                
+                {/* Semi-transparent overlay to ensure grid visibility */}
+                <div className="absolute inset-0 bg-gray-900 bg-opacity-30 z-1">
+                  {/* Game grid with coordinates */}
+                  <div className="absolute inset-0 z-2" style={{ width: '100%', height: '100%' }}>
+                    {/* Grid rendering with enhanced highlighting */}
+                    {Array.from({ length: 15 }, (_, y: number) => (
+                      <div key={`row-${y}`} style={{ display: 'flex', width: '100%', height: '6.66%' }}>
+                        {Array.from({ length: 15 }, (_, x: number) => {
+                          const isCurrentCell = characterPosition.x === x && characterPosition.y === y;
+                          // Waypoints for lesson 4
+                          const lesson4Waypoints = [
+                            { x: 11, y: 14 },
+                            { x: 8, y: 14 },
+                            { x: 8, y: 5 },
+                            { x: 12, y: 5 },
+                          ];
+                          const isLesson4Waypoint = activeLessonId === 4 && lesson4Waypoints.some(pt => pt.x === x && pt.y === y);
+                          // Show book image at (7,13) for lesson 5
+                          if (activeLessonId === 5 && x === 7 && y === 13 && !bookCollected) {
+                            return (
+                              <div
+                                key={`cell-${x}-${y}`}
+                                style={{
+                                  width: '6.66%',
+                                  height: '100%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  position: 'relative',
+                                  background: 'transparent',
+                                  flexDirection: 'column',
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    top: '-18px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    background: 'rgba(30,30,40,0.95)',
+                                    color: '#fbbf24',
+                                    fontWeight: 700,
+                                    fontSize: '13px',
+                                    padding: '2px 10px',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                                    border: '1.5px solid #fbbf24',
+                                    pointerEvents: 'none',
+                                    zIndex: 20,
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  Book
+                                </div>
+                                <img
+                                  src="/images/book.png"
+                                  alt="Book"
+                                  style={{ width: '80%', height: '80%', objectFit: 'contain', pointerEvents: 'none', zIndex: 1 }}
+                                />
+                              </div>
+                            );
+                          }
+                          // Show diamond image at (10,8) for lesson 6
+                          if (activeLessonId === 6 && x === 10 && y === 8) {
+                            return (
+                              <div
+                                key={`cell-${x}-${y}`}
+                                style={{
+                                  width: '6.66%',
+                                  height: '100%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  position: 'relative',
+                                  background: 'transparent',
+                                  flexDirection: 'column',
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    top: '-18px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    background: 'rgba(30,30,40,0.95)',
+                                    color: '#fbbf24',
+                                    fontWeight: 700,
+                                    fontSize: '13px',
+                                    padding: '2px 10px',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                                    border: '1.5px solid #fbbf24',
+                                    pointerEvents: 'none',
+                                    zIndex: 20,
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  Potion
+                                </div>
+                                <img
+                                  src="/images/potions/health-potion.png"
+                                  alt="Potion"
+                                  style={{ width: '80%', height: '80%', objectFit: 'contain', pointerEvents: 'none', zIndex: 1 }}
+                                />
+                              </div>
+                            );
+                          }
+                          // Show diamond images at (2,13) and (11,13) for lesson 7
+                          if (activeLessonId === 7 && x === 2 && y === 13 && !blueGemCollected) {
+                            return (
+                              <div
+                                key={`cell-${x}-${y}`}
+                                style={{
+                                  width: '6.66%',
+                                  height: '100%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  position: 'relative',
+                                  background: 'transparent',
+                                  flexDirection: 'column',
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    top: '-18px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    background: 'rgba(30,30,40,0.95)',
+                                    color: '#fbbf24',
+                                    fontWeight: 700,
+                                    fontSize: '13px',
+                                    padding: '2px 10px',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                                    border: '1.5px solid #fbbf24',
+                                    pointerEvents: 'none',
+                                    zIndex: 20,
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  Blue Gem
+                                </div>
+                                <img src="/images/gem-blue.png" alt="Blue Gem" style={{ width: 40, height: 40, zIndex: 1 }} />
+                              </div>
+                            );
+                          }
+                          if (activeLessonId === 7 && x === 11 && y === 13 && !redGemCollected) {
+                            return (
+                              <div
+                                key={`cell-${x}-${y}`}
+                                style={{
+                                  width: '6.66%',
+                                  height: '100%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  position: 'relative',
+                                  background: 'transparent',
+                                  flexDirection: 'column',
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    top: '-18px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    background: 'rgba(30,30,40,0.95)',
+                                    color: '#fbbf24',
+                                    fontWeight: 700,
+                                    fontSize: '13px',
+                                    padding: '2px 10px',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                                    border: '1.5px solid #fbbf24',
+                                    pointerEvents: 'none',
+                                    zIndex: 20,
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  Red Gem
+                                </div>
+                                <img src="/images/gem-red.png" alt="Red Gem" style={{ width: 40, height: 40, zIndex: 1 }} />
+                              </div>
+                            );
+                          }
+                          if (activeLessonId === 8 && x === 2 && y === 13 && !blueGem8Collected) {
+                            return (
+                              <div
+                                key={`cell-${x}-${y}`}
+                                style={{
+                                  width: '6.66%',
+                                  height: '100%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  position: 'relative',
+                                  background: 'transparent',
+                                  flexDirection: 'column',
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    top: '-18px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    background: 'rgba(30,30,40,0.95)',
+                                    color: '#fbbf24',
+                                    fontWeight: 700,
+                                    fontSize: '13px',
+                                    padding: '2px 10px',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                                    border: '1.5px solid #fbbf24',
+                                    pointerEvents: 'none',
+                                    zIndex: 20,
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  Blue Gem
+                                </div>
+                                <img src="/images/gem-blue.png" alt="Blue Gem" style={{ width: 40, height: 40, zIndex: 1 }} />
+                              </div>
+                            );
+                          }
+                          if (activeLessonId === 8 && x === 2 && y === 5 && !redGem8Collected) {
+                            return (
+                              <div
+                                key={`cell-${x}-${y}`}
+                                style={{
+                                  width: '6.66%',
+                                  height: '100%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  position: 'relative',
+                                  background: 'transparent',
+                                  flexDirection: 'column',
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    top: '-18px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    background: 'rgba(30,30,40,0.95)',
+                                    color: '#fbbf24',
+                                    fontWeight: 700,
+                                    fontSize: '13px',
+                                    padding: '2px 10px',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                                    border: '1.5px solid #fbbf24',
+                                    pointerEvents: 'none',
+                                    zIndex: 20,
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  Red Gem
+                                </div>
+                                <img src="/images/gem-red.png" alt="Red Gem" style={{ width: 40, height: 40, zIndex: 1 }} />
+                              </div>
+                            );
+                          }
+                          if (activeLessonId === 8 && x === 9 && y === 5 && !greenGem8Collected) {
+                            return (
+                              <div
+                                key={`cell-${x}-${y}`}
+                                style={{
+                                  width: '6.66%',
+                                  height: '100%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  position: 'relative',
+                                  background: 'transparent',
+                                  flexDirection: 'column',
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    top: '-18px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    background: 'rgba(30,30,40,0.95)',
+                                    color: '#fbbf24',
+                                    fontWeight: 700,
+                                    fontSize: '13px',
+                                    padding: '2px 10px',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                                    border: '1.5px solid #fbbf24',
+                                    pointerEvents: 'none',
+                                    zIndex: 20,
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  Green Gem
+                                </div>
+                                <img src="/images/gem-green.png" alt="Green Gem" style={{ width: 40, height: 40, zIndex: 1 }} />
+                              </div>
+                            );
+                          }
+                          // Show spike-trap image at (6,5) for lesson 9
+                          if (activeLessonId === 9 && x === 7 && y === 13) {
+                            return (
+                              <div
+                                key={`cell-${x}-${y}`}
+                                style={{
+                                  width: '6.66%',
+                                  height: '100%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  position: 'relative',
+                                  background: 'transparent',
+                                  flexDirection: 'column',
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    top: '-18px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    background: 'rgba(30,30,40,0.95)',
+                                    color: '#fbbf24',
+                                    fontWeight: 700,
+                                    fontSize: '13px',
+                                    padding: '2px 10px',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                                    border: '1.5px solid #fbbf24',
+                                    pointerEvents: 'none',
+                                    zIndex: 20,
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  Spike Trap
+                                </div>
+                                <img
+                                  src="/images/Spike_Trap.webp"
+                                  alt="Spike Trap"
+                                  style={{ width: 40, height: 40, zIndex: 1 }}
+                                />
+                              </div>
+                            );
+                          }
+                          // Inside the grid rendering loop, after defining isCurrentCell, add:
+                          const isEnemy = activeLessonId === 10 && level10Enemies.some(e => e.position.x === x && e.position.y === y);
+                          const isDecoy = activeLessonId === 10 && decoyPosition.x === x && decoyPosition.y === y;
+                          return (
+                            <div
+                              key={`cell-${x}-${y}`}
+                              style={{
+                                width: '6.66%',
+                                height: '100%',
+                                border: isCurrentCell 
+                                  ? '2px solid rgba(59, 130, 246, 0.8)' 
+                                  : '1px solid rgba(255, 255, 255, 0.2)',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                position: 'relative',
+                                fontSize: '10px',
+                                color: isCurrentCell ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.5)',
+                                backgroundColor: isCurrentCell 
+                                  ? 'rgba(37, 99, 235, 0.4)' 
+                                  : isLesson4Waypoint
+                                    ? 'rgba(251, 191, 36, 0.45)'
+                                    : 'transparent',
+                                transition: 'all 0.3s ease',
+                              }}
+                            >
+                              {/* Render enemy for level 10 */}
+                              {isEnemy && (() => {
+                                const enemyIdx = level10Enemies.findIndex(e => e.position.x === x && e.position.y === y);
+                                const enemy = level10Enemies[enemyIdx];
+                                const enemyId = `enemy-${enemyIdx}`;
+                                let direction = enemy?.direction || '270.0';
+                                let frame = 1;
+                                let imgPath = '';
+                                // Explicitly map direction to file name
+                                let dirFile = direction;
+                                if (direction === 'left' || direction === '180.0') dirFile = '0.0';      // left
+                                else if (direction === 'right' || direction === '0.0') dirFile = '180.0'; // right
+                                else if (direction === 'up' || direction === '90.0') dirFile = '90.0';
+                                else if (direction === 'down' || direction === '270.0') dirFile = '270.0';
+                                if (enemy?.animationState === 'attack') {
+                                  frame = (enemy.attackFrame % 6) + 1;
+                                  imgPath = `/enemies/Goblin-Types/1HAx_attack1/1HAx_attack1_(${dirFile})_0${frame}.png`;
+                                } else if (enemy?.animationState === 'walk') {
+                                  frame = (enemy.attackFrame % 8) + 1;
+                                  imgPath = `/enemies/Goblin-Types/1HAx_walking/1HAx_walking_(${dirFile})_0${frame}.png`;
+                                } else {
+                                  frame = (enemy.attackFrame % 6) + 1;
+                                  imgPath = `/enemies/Goblin-Types/1HAx_idle/1HAx_idle_(${dirFile})_0${frame}.png`;
+                                }
+                                // Debug log for image path
+                                if (typeof window !== 'undefined') {
+                                  if (!window._goblinDebugLogs) window._goblinDebugLogs = [];
+                                  window._goblinDebugLogs.unshift(`RENDER idx=${enemyIdx} dir=${direction} fileDir=${dirFile} path=${imgPath}`);
+                                  window._goblinDebugLogs = window._goblinDebugLogs.slice(0, 10);
+                                }
+                                return (
+                                  <img
+                                    src={imgPath}
+                                    alt="Goblin Enemy"
+                                    style={{
+                                      position: 'absolute',
+                                      top: '50%',
+                                      left: '50%',
+                                      width: 64,
+                                      height: 64,
+                                      zIndex: 100 + enemy.position.y,
+                                      transform: 'translate(-50%, -50%)',
+                                      pointerEvents: 'none',
+
+                                    }}
+                                  />
+                                );
+                              })()}
+
+                              {x}.{y}
+                              {/* Lesson 4 waypoint marker */}
+                              {isLesson4Waypoint && (
+                                <span style={{
+                                  position: 'absolute',
+                                  top: '50%',
+                                  left: '50%',
+                                  transform: 'translate(-50%, -50%)',
+                                  fontSize: '2.2rem',
+                                  color: '#fbbf24',
+                                  zIndex: 30,
+                                  pointerEvents: 'none',
+                                  filter: 'drop-shadow(0 0 6px #fbbf24cc)'
+                                }} title="Waypoint">
+                                  ★
+                                </span>
+                              )}
+                              {/* Always show left arrow at (3,12) in lesson 2 */}
+                              {activeLessonId === 2 && x === 3 && y === 12 && (
+                                <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '54px', color: '#38bdf8', zIndex: 20 }} title="Try walking here!">
+                                  &#8592;
+                                </span>
+                              )}
+                              {activeLessonId === 2 && x === 1 && y === 9 && (
+                                <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '54px', color: '#38bdf8', zIndex: 20 }} title="Try walking up here!">
+                                  &#8593;
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+                {/* Decoy character - on top of grid */}
+                {(() => {
+                  const decoyDirMap = { up: 'Up', down: 'Down', left: 'Left', right: 'Right' };
+                  const decoyStateMap = { idle: 'Idle', walk: 'Walk' };
+                  const decoyDir = decoyDirMap[decoyDirection] || 'Down';
+                  const decoyStateStr = decoyStateMap[decoyState] || 'Idle';
+                  const frameCount = decoyState === 'idle' ? 7 : 8; // 7 frames for idle, 8 for walk
+                  const frameNum = decoyAnimFrame % frameCount;
+                  const decoyFrame = frameNum.toString().padStart(3, '0');
+                  const decoyImgPath = `/character/assasin-wolf/${decoyStateStr}_${decoyDir}/${decoyFrame}.png`;
+                  console.log("Decoy image path:", decoyImgPath);
+                  return activeLessonId === 10 ? (
+                    <Decoy
+                      position={decoyPosition}
+                      pixelPosition={decoyPixelPosition}
+                      direction={decoyDirection}
+                      state={decoyState}
+                      animFrame={decoyAnimFrame}
+                      imgPath={decoyImgPath}
+                      showDebug={true}
+                    />
+                  ) : null;
+                })()}
+
+                {/* Character - on top of everything */}
+                <div 
+                  style={{
+                    position: 'absolute',
+                    width: '80px',
+                    height: '80px',
+                    zIndex: 100 + characterPosition.y,
+                    transition: 'all 0.5s ease',
+                    left: `calc(${characterPosition.x * 6.66}% + 35px)`, // move right by 3px more
+                    top: `calc(${characterPosition.y * 6.66}% + 32px)`, // keep down offset
+                    transform: 'translate(-50%, -100%)',
+                    pointerEvents: 'none',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
+                >
+                  <AnimatedCharacter
+                    direction={characterDirection}
+                    state={characterState}
+                    sprites={mageSprites}
+                    size={80}
+                  />
+                </div>
+                
+                {/* Position display */}
+                <div className="absolute bottom-2 right-2 bg-blue-600 text-white px-3 py-1.5 rounded text-sm font-mono z-10">
+                  Position: ({characterPosition.x}, {characterPosition.y})
+                </div>
+
+                {/* Hidden audio for victory sound */}
+                {playVictorySound && (
+                  <audio 
+                    src="/audio/win.mp3" 
+                    autoPlay 
+                    onEnded={() => setPlayVictorySound(false)} 
+                  />
+                )}
+                
+                {/* Victory screen overlay */}
+                {isSuccess && (
+                  <div className="victory-overlay">
+                    <div className="victory-stars">
+                      {generateStars()}
+                    </div>
+                    {/* Confetti */}
+                    {Array.from({ length: 40 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="confetti-piece"
+                        style={{
+                          left: `${Math.random() * 100}%`,
+                          background: `hsl(${Math.random() * 360}, 80%, 60%)`,
+                          animationDelay: `${Math.random() * 1.5}s`,
+                        }}
+                      />
+                    ))}
+                    <div className="victory-text">VICTORY!</div>
+                    <img 
+                      src="/victory.png" 
+                      alt="Victory!" 
+                      className="victory-image"
+                      onLoad={() => setPlayVictorySound(true)}
+                      onError={(e) => {
+                        const imgElement = e.currentTarget;
+                        // Fallback text if image doesn't load
+                        imgElement.style.width = "350px";
+                        imgElement.style.height = "200px";
+                        imgElement.style.background = "linear-gradient(45deg, #FFD700, #FFA500)";
+                        imgElement.style.display = "flex";
+                        imgElement.style.alignItems = "center";
+                        imgElement.style.justifyContent = "center";
+                        imgElement.style.borderRadius = "20px";
+                        imgElement.style.fontSize = "48px";
+                        imgElement.style.fontWeight = "bold";
+                        imgElement.style.textShadow = "0px 2px 5px rgba(0,0,0,0.5)";
+                        imgElement.style.boxShadow = "0px 0px 30px rgba(255, 215, 0, 0.5)";
+                        imgElement.insertAdjacentHTML('beforeend', '<div style="text-align:center">🏆<br>VICTORY!</div>');
+                      }}
+                    />
+                    <div className="flex gap-4 mt-6">
+                    <button
+                        onClick={() => {
+                          console.log("Next lesson button clicked");
+                          handleNextLesson();
+                        }}
+                        className="victory-button px-6 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white text-xl font-bold rounded-full transition-all shadow-lg"
+                    >
+                      Next Lesson →
+                    </button>
+                      <button
+                        onClick={handleBackToLessons}
+                        className="victory-button px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-xl font-bold rounded-full transition-all shadow-lg"
+                      >
+                        Back to Lessons
+                      </button>
+                      <button
+                        onClick={resetGame}
+                        className="victory-button px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white text-xl font-bold rounded-full transition-all shadow-lg"
+                      >
+                        Play Again
+                    </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right panel - Code editor and execution log */}
+            <div className="w-full md:w-1/3 p-4 flex flex-col h-full">
+              {/* Code editor section - larger height */}
+              <div className="flex-1 mb-4" style={{ height: '70%', minHeight: '400px' }}>
+                <CodeEditor
+                  code={code}
+                  onChange={setCode}
+                  onRun={() => executeCode(code)}
+                  onReset={resetGame}
+                  onShowHint={showHint}
+                  onShowSolution={showSolution}
+                  isRunning={isRunning}
+                  level={activeLessonId || 1}
+                  currentExecutingLine={currentExecutingLine}
+                  codeLines={codeLines}
+                  placeholder={codePlaceholder}
+                  />
+                
+                {/* Button to move player to position (6, 7) */}
+                {activeLessonId === 9 && (
+                  <div className="mt-4 flex space-x-2">
+                    {/* Debug buttons removed as requested */}
+                  </div>
+                )}
+                </div>
+                
+              {/* Execution log section - smaller height */}
+              <div className="bg-gray-800 rounded-lg p-3" style={{ maxHeight: '150px' }}>
+                  <h3 className="text-sm font-medium text-white mb-2">Execution Log</h3>
+                <div className="overflow-y-auto" style={{ maxHeight: '120px' }}>
+                  {executionLogs.length === 0 ? (
+                    <p className="text-gray-400 text-sm">Run your code to see execution logs</p>
+                  ) : (
+                    <div className="space-y-1">
+                      {executionLogs.map((log, index) => (
+                        <div 
+                          key={index} 
+                          className="text-sm text-gray-300 font-mono"
+                          dangerouslySetInnerHTML={{ __html: log }}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Navigation buttons when success */}
+              {isSuccess && (
+                <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={handleBackToLessons}
+                    className="w-1/2 px-4 py-3 rounded-lg text-md font-medium bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Lessons
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setIsSuccess(false);
+                      setPlayVictorySound(false);
+                    }}
+                    className="w-1/2 px-4 py-3 rounded-lg text-md font-medium bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center"
+                  >
+                    Play Again
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
+export default XCodeAcademy;
+
+// Find the lesson 10 entry in X_CODE_LESSONS and set its solution property:
+X_CODE_LESSONS.forEach(lesson => {
+  if (lesson.id === 10) {
+    lesson.solution = `decoy.moveUp(9)\ndecoy.moveLeft()\ndecoy.moveRight()\ndecoy.moveDown(11)`;
+  }
+});

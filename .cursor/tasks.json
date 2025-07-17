@@ -1,0 +1,32 @@
+[
+  {
+    "label": "💬 Prompt → 📄 File Created → 🔧 Game Logic Updated → 💥 Ready to Play",
+    "type": "shell",
+    "command": "node autoWriteFromOpenAI.js"
+  },
+  {
+    "label": "🚀 Full AI Feature Builder",
+    "type": "shell",
+    "command": "node gptDevAgent.js"
+  },
+  {
+    "label": "🧠 Quick AI Feature Builder",
+    "type": "shell",
+    "command": "node aiFeatureBuilder.js"
+  },
+  {
+    "label": "🚀 Start Development Server",
+    "type": "shell",
+    "command": "npm run dev"
+  },
+  {
+    "label": "🏗️ Build Project",
+    "type": "shell",
+    "command": "npm run build"
+  },
+  {
+    "label": "🔍 Preview Build",
+    "type": "shell",
+    "command": "npm run preview"
+  }
+] 
