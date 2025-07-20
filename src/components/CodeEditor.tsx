@@ -18,10 +18,48 @@ interface CodeEditorProps {
 const PlaceholderOverlay = ({ text, visible }: { text: string, visible: boolean }) => {
   if (!visible || !text) return null;
   
+  // Split the text by newlines and preserve empty lines
+  const lines = text.split('\n');
+  
   return (
-    <div className="absolute inset-0 z-10 pointer-events-none p-4">
-      <div className="bg-transparent font-mono text-sm">
-        <div className="text-blue-400 opacity-40">{text}</div>
+    <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
+      <div className="relative h-full w-full">
+        <div className="absolute left-[70px] top-[32px] right-0">
+          <div 
+            className="font-mono text-sm text-blue-400 opacity-40" 
+            style={{ 
+              fontFeatureSettings: '"liga" 0, "calt" 0',
+              lineHeight: '19px',
+              fontFamily: 'Consolas, "Courier New", monospace',
+              letterSpacing: 'normal',
+              wordSpacing: 'normal',
+              whiteSpace: 'pre',
+              paddingLeft: '15px',
+              marginTop: '-1px'
+            }}
+          >
+            {lines.map((line, i) => {
+              // Preserve empty lines with a space to maintain height
+              const displayLine = line === '' ? ' ' : line;
+              return (
+                <div 
+                  key={i} 
+                  className="h-[19px] leading-[19px] block whitespace-pre"
+                  style={{
+                    whiteSpace: 'pre',
+                    fontFamily: 'Consolas, "Courier New", monospace',
+                    lineHeight: '19px',
+                    height: '19px',
+                    margin: 0,
+                    padding: 0
+                  }}
+                >
+                  {displayLine}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -49,32 +87,24 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   const [showPlaceholder, setShowPlaceholder] = useState(true);
   const [showSolutionButton, setShowSolutionButton] = useState(true);
   
-  // Initialize state based on level
+  // Always show solution button if the lesson has a solution (remove special hiding for Lesson 10)
   useEffect(() => {
-    // Hide solution button initially for Lesson 10
-    if (level === 10) {
-      setShowSolutionButton(false);
-    } else {
-      setShowSolutionButton(true);
-    }
+    setShowSolutionButton(true);
   }, [level]);
   
-  // Update showingSolution state when code changes
+  // Handle solution button click
+  const handleShowSolution = () => {
+    setShowingSolution(!showingSolution);
+    onShowSolution();
+  };
+
+  // Update placeholder visibility when code changes
   useEffect(() => {
-    // Check if code contains more than just comments
-    const hasCodeBeyondComments = !/^(\s*#.*\n?)*$/.test(code);
-    setShowingSolution(hasCodeBeyondComments);
-    
     // Hide placeholder when user starts typing anything
     if (code.trim() !== '') {
       setShowPlaceholder(false);
     } else {
       setShowPlaceholder(true);
-    }
-    
-    // Show solution button once user starts typing in Lesson 10
-    if (level === 10 && code.trim() !== '') {
-      setShowSolutionButton(true);
     }
   }, [code, level]);
   
@@ -83,15 +113,69 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     editorRef.current = editor;
     setMonaco(monacoInstance);
     
+    // Adjust content left margin to move text left
+    editor.updateOptions({
+      padding: { top: 22, left: -30 },
+      scrollbar: {
+        horizontal: 'hidden',
+        vertical: 'hidden'
+      }
+    });
+    
+    // Apply custom editor styling
+    monacoInstance.editor.defineTheme('custom-dark', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: '', foreground: 'D4D4D4', background: '1E1E1E' },
+      ],
+      colors: {
+        'editor.background': '#1E1E1E',
+        'editor.lineHighlightBackground': '#2A2D2E',
+        'editorLineNumber.foreground': '#858585',
+        'editorLineNumber.activeForeground': '#C6C6C6',
+        'editorGutter.background': '#1E1E1E',
+      }
+    });
+    
+    // Apply the custom theme
+    monacoInstance.editor.setTheme('custom-dark');
+    
     // Get actual line height from editor after it's mounted
     setTimeout(() => {
       try {
         const lineHeight = editor.getOption('lineHeight') || 19;
         const editorDomNode = editor.getDomNode();
         if (editorDomNode) {
-          // Try to find the first line element to measure its actual position
+          // Add custom CSS for line numbers and padding
+          const style = document.createElement('style');
+          style.textContent = `
+            .monaco-editor .line-numbers {
+              padding-left: 10px !important;
+            }
+            .monaco-editor .view-lines {
+              padding-left: 30px !important;
+              padding-top: 0 !important;
+              margin-top: 0 !important;
+              margin-left: -30px !important;
+            }
+            .monaco-editor .margin-view-overlays {
+              width: 60px !important;
+            }
+            .monaco-editor, .monaco-editor-background, .monaco-editor .inputarea.ime-input {
+              padding-top: 22px !important;
+            }
+            .monaco-editor .lines-content {
+              padding-left: 30px !important;
+              padding-top: 0 !important;
+              margin-top: 0 !important;
+              margin-left: -30px !important;
+            }
+          `;
+          document.head.appendChild(style);
+          
           const firstLine = editorDomNode.querySelector('.view-line');
-          const paddingTop = firstLine ? firstLine.getBoundingClientRect().top - editorDomNode.getBoundingClientRect().top : 4;
+          const paddingTop = firstLine ? firstLine.getBoundingClientRect().top - editorDomNode.getBoundingClientRect().top : 10;
           
           setEditorMeasurements({
             lineHeight,
@@ -137,10 +221,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     }, 100);
   };
   
-  // Handle solution button click
-  const handleSolutionClick = () => {
-    onShowSolution();
-  };
+  // Solution click handler is now handled by handleShowSolution
   
   // Show solution button when run button is clicked
   useEffect(() => {
@@ -149,8 +230,35 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     }
   }, [isRunning, level]);
   
-  // Calculate editor height to fit exactly 10 lines
-  const editorHeight = "220px"; // Approximately 10 lines + padding
+  // Calculate editor height to fit exactly 10 lines with padding
+  const editorHeight = "240px"; // Increased to accommodate padding
+  
+  // Add custom CSS for Monaco Editor to ensure consistent text positioning
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      .monaco-editor .view-lines {
+        padding-left: 12px !important;
+      }
+      .monaco-editor .line-numbers {
+        padding-left: 10px !important;
+      }
+      .monaco-editor .margin-view-overlays {
+        width: 40px !important;
+      }
+      .monaco-editor .lines-content {
+        padding-left: 20px !important;
+      }
+      .monaco-editor .view-line {
+        padding-top: 1px !important;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
   
   return (
     <div className="bg-gray-900 rounded-lg overflow-hidden shadow-2xl">
@@ -161,12 +269,12 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
             <div className="w-3 h-3 bg-red-500 rounded-full"></div>
             <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
             <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-            <span className="ml-4 text-gray-300 font-medium">Level {level} - Code Editor</span>
+            <span className="ml-4 text-gray-300 font-medium">Level {level} - Python Editor</span>
           </div>
           <div className="flex items-center space-x-2">
             {showSolutionButton && (
               <button
-                onClick={handleSolutionClick}
+                onClick={handleShowSolution}
                 className="flex items-center space-x-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-sm font-medium transition-colors"
               >
                 <BookOpen size={16} />
@@ -195,9 +303,11 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
             fontSize: 14,
             lineHeight: 19, // Fixed line height for consistency
             lineNumbers: 'on',
+            lineNumbersMinChars: 4, // Ensure consistent width for line numbers
             roundedSelection: false,
             scrollBeyondLastLine: false,
             automaticLayout: true,
+            padding: { top: 10, bottom: 10 }, // Add padding to the editor content
             tabSize: 2,
             wordWrap: 'on',
             readOnly: isRunning,
@@ -224,8 +334,10 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
         />
       </div>
 
+      {/* Spacer to push controls further down */}
+      <div style={{ height: '40px' }} />
       {/* Controls */}
-      <div className="bg-gray-800 px-4 py-3 border-t border-gray-700">
+      <div className="bg-gray-800 px-4 py-6 border-t border-gray-700 mt-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <button

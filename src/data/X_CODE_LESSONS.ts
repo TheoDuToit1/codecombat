@@ -320,7 +320,7 @@ export const X_CODE_LESSONS = [
     lessonNumber: 10,
     title: "Illusory Interruption",
     description: "Distract the guards, then escape.",
-    codeExample: "",
+    codeExample: "# Use the Decoy to distract the guards by stepping on the X.\ndecoy.moveUp(9)\ndecoy.moveLeft()\ndecoy.moveRight()\ndecoy.moveDown(11)", 
     solution: "# Use the Decoy to distract the guards by stepping on the X.\n\ndecoy.moveUp(9)\ndecoy.moveLeft()\ndecoy.moveRight()\ndecoy.moveDown(11)",
     goals: [
       "Distract the guards.",
@@ -353,10 +353,30 @@ export const X_CODE_LESSONS = [
   {
     id: 11,
     lessonNumber: 11,
+    playerStart: { x: 7, y: 13 },
     title: "Forgetful Gemsmith",
     description: "There are gems scattered all over the dungeons in Kithgard!",
-    codeExample: "# Use hero.moveRight(), hero.moveDown(), hero.moveLeft(), hero.moveUp() commands to collect ALL gems then move to the X mark.\n\n",
-    solution: "use hero.moveRight()\nhero.moveDown()\nhero.moveLeft()\nhero.moveUp() commands to collect ALL gems then move to the X mark.",
+    codeExample: `# Use hero.moveRight(), 
+hero.moveDown(), 
+hero.moveLeft(), 
+hero.moveUp() 
+collect ALL gems then move to the X mark.`,
+
+    solution: `hero.moveRight(3)
+hero.moveUp(4)
+hero.moveRight(2)
+hero.moveUp(5)
+hero.moveLeft(3)
+hero.moveUp()
+hero.moveLeft(7)
+hero.moveDown(5)
+hero.moveRight(4)
+hero.moveUp(3)
+hero.moveRight()
+hero.moveDown(7)
+hero.moveLeft(3)
+hero.moveRight(4)
+hero.moveUp(10)`, 
     goals: [
       "Collect all gems.",
       "Reach the exit."

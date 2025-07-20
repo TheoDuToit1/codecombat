@@ -353,9 +353,9 @@ const LESSON11_GEMS = [
   { x: 7, y: 5, color: 'red' },
   { x: 12, y: 8, color: 'green' },
   { x: 4, y: 12, color: 'blue' },
-  { x: 10, y: 2, color: 'red' },
-  { x: 13, y: 13, color: 'green' },
-  { x: 1, y: 10, color: 'blue' },
+  { x: 9, y: 3, color: 'red' },
+  { x: 10, y: 9, color: 'green' },
+  { x: 3, y: 8, color: 'blue' },
   { x: 8, y: 13, color: 'red' },
   { x: 6, y: 7, color: 'green' },
   { x: 11, y: 4, color: 'blue' }
@@ -398,6 +398,11 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
   
   // State for character
   const [characterPosition, setCharacterPosition] = useState(() => {
+    const lessonData = X_CODE_LESSONS.find(l => l.id === lessonIdNum);
+    if (lessonData && lessonData.playerStart) {
+      return { x: lessonData.playerStart.x, y: lessonData.playerStart.y };
+    }
+    // fallback to previous defaults if no config found
     if (lessonIdNum === 9) {
       return { x: 10, y: 14 };
     }
@@ -407,6 +412,19 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
   useEffect(() => {
     characterPositionRef.current = characterPosition;
   }, [characterPosition]);
+
+  // Ensure correct spawn on lesson start
+  useEffect(() => {
+    if (isLessonActive && activeLessonId) {
+      const lessonData = X_CODE_LESSONS.find(l => l.id === activeLessonId);
+      if (
+        lessonData && lessonData.playerStart &&
+        (characterPosition.x !== lessonData.playerStart.x || characterPosition.y !== lessonData.playerStart.y)
+      ) {
+        setCharacterPosition({ x: lessonData.playerStart.x, y: lessonData.playerStart.y });
+      }
+    }
+  }, [isLessonActive, activeLessonId]);
   const [characterDirection, setCharacterDirection] = useState<'up' | 'down' | 'left' | 'right'>('right');
   const [characterState, setCharacterState] = useState<'idle' | 'walk' | 'attack'>('idle');
   
@@ -1156,7 +1174,7 @@ const XCodeAcademy: React.FC<XCodeAcademyProps> = ({
     setCharacterDirection('right');
     setCharacterState('idle');
     } else if (activeLessonId === 11) {
-      setCharacterPosition({ x: 7, y: 14 });
+      setCharacterPosition({ x: 7, y: 13 });
     } else if (activeLessonId === 12) {
       setLesson12Collected(false);
       setCharacterPosition({ x: 7, y: 14 });
